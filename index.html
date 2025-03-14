@@ -5,19 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Приложение для анкет в Telegram</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/appwrite/13.0.0/sdk.min.js"></script>
     <style>
+        /* Основные стили */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
+            background-color: #f0f8ff; /* Светло-голубой фон */
             color: #333;
             text-align: center;
             margin: 0;
             padding: 0;
         }
+        /* Заголовки */
         h1, h2 {
             color: #007acc;
         }
+        /* Кнопки */
         button {
             background-color: #007acc;
             color: white;
@@ -31,6 +33,7 @@
         button:hover {
             background-color: #005f99;
         }
+        /* Контейнер для анкет */
         .container {
             display: flex;
             flex-wrap: wrap;
@@ -38,6 +41,7 @@
             gap: 20px;
             padding: 20px;
         }
+        /* Карточка анкеты */
         .profile {
             background: white;
             border-radius: 10px;
@@ -50,6 +54,30 @@
             width: 100%;
             border-radius: 10px;
         }
+        .profile h3 {
+            margin: 10px 0;
+        }
+        .profile p {
+            color: #555;
+        }
+        .profile button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        /* Форма добавления анкеты */
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+        }
+        input:focus {
+            border-color: #005f99;
+            outline: none;
+        }
+        
+        /* Дополнительные стили */
         .form-container {
             background: white;
             border-radius: 10px;
@@ -58,115 +86,278 @@
             max-width: 500px;
             margin: 20px auto;
         }
+        
+        textarea {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            background: #ddd;
+            margin: 0 5px;
+        }
+        
+        .tab.active {
+            background: #007acc;
+            color: white;
+        }
+        
+        #preview {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>Приложение для анкет в Telegram</h1>
     
-    <div id="questionnaires">
-        <h2>Доступные анкеты</h2>
-        <div class="container" id="profiles-container"></div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('questionnaires')">Все анкеты</div>
+        <div class="tab" onclick="switchTab('create')">Создать новую</div>
     </div>
     
-    <div id="create">
+    <div id="questionnaires">
+        <h2>Доступные анкеты</h2>
+        <div class="container" id="profiles-container">
+            <!-- Анкеты будут отображаться здесь -->
+        </div>
+    </div>
+    
+    <div id="create" style="display:none">
         <h2>Создать новую анкету</h2>
         <div class="form-container">
             <input type="text" id="name" placeholder="Ваше имя" required>
             <input type="text" id="age" placeholder="Ваш возраст" required>
+            <input type="text" id="location" placeholder="Ваше местоположение" required>
             <textarea id="about" placeholder="О себе" rows="4" required></textarea>
+            <input type="text" id="imageUrl" placeholder="URL изображения (необязательно)">
+            <div id="preview-image" style="max-width: 200px; margin: 10px auto; display: none;">
+                <img id="image-preview" style="width: 100%; border-radius: 10px;">
+            </div>
             <button onclick="submitQuestionnaire()">Отправить анкету</button>
         </div>
     </div>
+    
+    <div id="preview" style="display:none">
+        <h2>Предпросмотр анкеты</h2>
+        <div class="container">
+            <div class="profile" id="preview-profile">
+                <!-- Содержимое для предпросмотра будет добавлено здесь -->
+            </div>
+        </div>
+        <button onclick="backToQuestionnaires()">Вернуться ко всем анкетам</button>
+    </div>
 
-<script>
-    const appwrite = {
-        endpoint: 'https://cloud.appwrite.io/v1',
-        projectId: '67c612a50017aa7ec1cd',
-        databaseId: '67c612a50017aa7ec1cd',
-        collectionId: '67c612be003cad091ef8',
-        client: null,
-        database: null,
-        init: function() {
-            this.client = new Appwrite.Client();
-            this.client.setEndpoint(this.endpoint).setProject(this.projectId);
-            this.database = new Appwrite.Databases(this.client);
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        if (appwrite.init()) {
+    <script>
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let questionnaires = [];
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Загрузить сохраненные анкеты из localStorage
             loadQuestionnaires();
-        } else {
-            alert('Ошибка подключения к базе данных.');
-        }
-    });
-
-    async function loadQuestionnaires() {
-        try {
-            const response = await appwrite.database.listDocuments(
-                appwrite.databaseId,
-                appwrite.collectionId
-            );
-            renderQuestionnaires(response.documents);
-        } catch (error) {
-            console.error('Ошибка загрузки анкет:', error);
-        }
-    }
-
-    function renderQuestionnaires(questionnaires) {
-        const container = document.getElementById('profiles-container');
-        container.innerHTML = '';
-        questionnaires.forEach(q => {
-            const profileDiv = document.createElement('div');
-            profileDiv.className = 'profile';
-            profileDiv.innerHTML = `
-                <h3>${q.name}, ${q.age}</h3>
-                <p>${q.about}</p>
-                <button onclick="deleteQuestionnaire('${q.$id}')">Удалить</button>
-            `;
-            container.appendChild(profileDiv);
+            
+            // Настройка предпросмотра изображения
+            document.getElementById('imageUrl').addEventListener('input', function() {
+                const imageUrl = this.value.trim();
+                const previewDiv = document.getElementById('preview-image');
+                const previewImg = document.getElementById('image-preview');
+                
+                if (imageUrl) {
+                    previewImg.src = imageUrl;
+                    previewDiv.style.display = 'block';
+                    
+                    // Обработка ошибки загрузки изображения
+                    previewImg.onerror = function() {
+                        previewDiv.style.display = 'none';
+                        alert('Неверный URL изображения. Пожалуйста, укажите корректный URL.');
+                    };
+                } else {
+                    previewDiv.style.display = 'none';
+                }
+            });
+            
+            // Инициализация Telegram WebApp, если доступно
+            if (tg) {
+                tg.expand();
+                
+                // Установка темы Telegram
+                document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
+                
+                // Добавление функциональности кнопки "Назад"
+                tg.BackButton.onClick(function() {
+                    if (document.getElementById('preview').style.display !== 'none') {
+                        backToQuestionnaires();
+                        tg.BackButton.hide();
+                    }
+                });
+            }
         });
-    }
-
-    async function submitQuestionnaire() {
-        const name = document.getElementById('name').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const about = document.getElementById('about').value.trim();
-
-        if (!name || !age || !about) {
-            alert('Заполните все поля.');
-            return;
-        }
-
-        try {
-            await appwrite.database.createDocument(
-                appwrite.databaseId,
-                appwrite.collectionId,
-                'unique()',
-                { name, age, about }
-            );
-            alert('Анкета добавлена!');
-            loadQuestionnaires();
-        } catch (error) {
-            console.error('Ошибка при сохранении:', error);
-        }
-    }
-
-    async function deleteQuestionnaire(id) {
-        if (confirm('Удалить анкету?')) {
-            try {
-                await appwrite.database.deleteDocument(
-                    appwrite.databaseId,
-                    appwrite.collectionId,
-                    id
-                );
-                loadQuestionnaires();
-            } catch (error) {
-                console.error('Ошибка удаления:', error);
+        
+        // Переключение между вкладками
+        function switchTab(tabName) {
+            document.getElementById('questionnaires').style.display = 'none';
+            document.getElementById('create').style.display = 'none';
+            document.getElementById('preview').style.display = 'none';
+            
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Обновление активной вкладки
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const activeTab = Array.from(tabs).find(tab => {
+                if (tabName === 'questionnaires') return tab.textContent === 'Все анкеты';
+                if (tabName === 'create') return tab.textContent === 'Создать новую';
+                return false;
+            });
+            
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+            
+            // Управление кнопкой "Назад" в Telegram
+            if (tg && tg.BackButton) {
+                tg.BackButton.hide();
             }
         }
-    }
-</script>
-
+        
+        // Отправка новой анкеты
+        function submitQuestionnaire() {
+            const name = document.getElementById('name').value.trim();
+            const age = document.getElementById('age').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const about = document.getElementById('about').value.trim();
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            
+            if (!name || !age || !location || !about) {
+                alert('Пожалуйста, заполните все обязательные поля.');
+                return;
+            }
+            
+            // Создание нового объекта анкеты
+            const newQuestionnaire = {
+                id: Date.now().toString(),
+                name: name,
+                age: age,
+                location: location,
+                about: about,
+                imageUrl: imageUrl || 'https://via.placeholder.com/250x150?text=Нет+изображения'
+            };
+            
+            // Добавление в массив и сохранение
+            questionnaires.push(newQuestionnaire);
+            saveQuestionnaires();
+            
+            // Очистка формы
+            document.getElementById('name').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('about').value = '';
+            document.getElementById('imageUrl').value = '';
+            document.getElementById('preview-image').style.display = 'none';
+            
+            // Переключение обратно на вкладку анкет
+            switchTab('questionnaires');
+            
+            alert('Ваша анкета успешно добавлена!');
+        }
+        
+        // Загрузка анкет из localStorage
+        function loadQuestionnaires() {
+            try {
+                const saved = localStorage.getItem('telegramQuestionnaires');
+                if (saved) {
+                    questionnaires = JSON.parse(saved);
+                }
+                renderQuestionnaires();
+            } catch (e) {
+                console.error('Ошибка загрузки анкет:', e);
+                questionnaires = [];
+            }
+        }
+        
+        // Сохранение анкет в localStorage
+        function saveQuestionnaires() {
+            try {
+                localStorage.setItem('telegramQuestionnaires', JSON.stringify(questionnaires));
+                renderQuestionnaires();
+            } catch (e) {
+                console.error('Ошибка сохранения анкет:', e);
+                alert('Не удалось сохранить анкету. Пожалуйста, попробуйте еще раз.');
+            }
+        }
+        
+        // Отрисовка всех анкет
+        function renderQuestionnaires() {
+            const container = document.getElementById('profiles-container');
+            container.innerHTML = '';
+            
+            if (questionnaires.length === 0) {
+                container.innerHTML = '<p>Нет доступных анкет. Создайте новую!</p>';
+                return;
+            }
+            
+            questionnaires.forEach(q => {
+                const profileElement = document.createElement('div');
+                profileElement.className = 'profile';
+                profileElement.innerHTML = `
+                    <img src="${q.imageUrl}" alt="${q.name}" onerror="this.src='https://via.placeholder.com/250x150?text=Ошибка+изображения'">
+                    <h3>${q.name}, ${q.age}</h3>
+                    <p>${q.location}</p>
+                    <button onclick="viewQuestionnaire('${q.id}')">Посмотреть детали</button>
+                `;
+                container.appendChild(profileElement);
+            });
+        }
+        
+        // Просмотр отдельной анкеты
+        function viewQuestionnaire(id) {
+            const questionnaire = questionnaires.find(q => q.id === id);
+            if (!questionnaire) return;
+            
+            const previewProfile = document.getElementById('preview-profile');
+            previewProfile.innerHTML = `
+                <img src="${questionnaire.imageUrl}" alt="${questionnaire.name}" onerror="this.src='https://via.placeholder.com/250x150?text=Ошибка+изображения'">
+                <h3>${questionnaire.name}, ${questionnaire.age}</h3>
+                <p><strong>Местоположение:</strong> ${questionnaire.location}</p>
+                <p>${questionnaire.about}</p>
+                <button onclick="deleteQuestionnaire('${questionnaire.id}')">Удалить</button>
+            `;
+            
+            switchTab('preview');
+            
+            // Показать кнопку "Назад" в Telegram
+            if (tg && tg.BackButton) {
+                tg.BackButton.show();
+            }
+        }
+        
+        // Удаление анкеты
+        function deleteQuestionnaire(id) {
+            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+                questionnaires = questionnaires.filter(q => q.id !== id);
+                saveQuestionnaires();
+                backToQuestionnaires();
+            }
+        }
+        
+        // Вернуться к списку анкет
+        function backToQuestionnaires() {
+            switchTab('questionnaires');
+        }
+    </script>
 </body>
 </html>
