@@ -292,8 +292,8 @@
     <div class="main-title">ВЗГЛЯД В БУДУЩЕЕ</div>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('questionnaires')">Все анкеты</div>
-        <div class="tab" onclick="switchTab('create')">Создать новую</div>
+        <div class="tab active" id="questionnaires-tab" onclick="switchTab('questionnaires')">Все анкеты</div>
+        <div class="tab" id="create-tab" onclick="switchTab('create')">Создать новую</div>
     </div>
     
     <div id="questionnaires">
@@ -339,9 +339,9 @@
                     <input type="number" placeholder="Цена, руб." class="service-price">
                 </div>
             </div>
-            <button class="add-service-btn" onclick="addServiceRow()">+</button>
+            <button type="button" class="add-service-btn" onclick="addServiceRow()">+</button>
             
-            <button onclick="submitQuestionnaire()">Отправить анкету</button>
+            <button type="button" onclick="submitQuestionnaire()">Отправить анкету</button>
         </div>
     </div>
     
@@ -360,17 +360,60 @@
         let base64Image = null;
         let activeServiceFilters = [];
         
+        // Используем sessionStorage для хранения временных данных в этой сессии
+        // и использование Telegram хранилища, если оно доступно
+        const storage = {
+            save: function(key, value) {
+                try {
+                    // Пробуем сохранить в Telegram WebApp
+                    if (tg && tg.CloudStorage) {
+                        tg.CloudStorage.setItem(key, value);
+                        return;
+                    }
+                    
+                    // Используем sessionStorage как резервный вариант
+                    try {
+                        sessionStorage.setItem(key, value);
+                    } catch (e) {
+                        console.warn("Failed to use sessionStorage, using in-memory storage", e);
+                    }
+                } catch (e) {
+                    console.warn("Storage error", e);
+                }
+            },
+            
+            load: function(key) {
+                try {
+                    // Пробуем загрузить из Telegram WebApp
+                    if (tg && tg.CloudStorage) {
+                        return tg.CloudStorage.getItem(key);
+                    }
+                    
+                    // Используем sessionStorage как резервный вариант
+                    try {
+                        return sessionStorage.getItem(key);
+                    } catch (e) {
+                        console.warn("Failed to use sessionStorage", e);
+                        return null;
+                    }
+                } catch (e) {
+                    console.warn("Storage error", e);
+                    return null;
+                }
+            }
+        };
+        
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             // Генерация ID пользователя или получение сохраненного
-            if (localStorage.getItem('telegramUserId')) {
-                currentUser = localStorage.getItem('telegramUserId');
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                // Используем Telegram ID пользователя, если доступно
+                currentUser = 'tg_' + tg.initDataUnsafe.user.id;
             } else {
                 currentUser = 'user_' + Date.now().toString();
-                localStorage.setItem('telegramUserId', currentUser);
             }
             
-            // Загрузить сохраненные анкеты из localStorage
+            // Загрузить сохраненные анкеты
             loadQuestionnaires();
             
             // Настройка загрузки файла (заменено URL на выбор из файлов)
@@ -415,6 +458,21 @@
                 
                 // Установка темы Telegram
                 document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
+                
+                // Если есть данные от WebApp, загрузим их
+                if (tg.CloudStorage) {
+                    tg.CloudStorage.getItems(["questionnaires"], function(err, result) {
+                        if (!err && result && result.questionnaires) {
+                            try {
+                                questionnaires = JSON.parse(result.questionnaires);
+                                displayQuestionnaires();
+                                updateServiceFilters();
+                            } catch (e) {
+                                console.warn("Error parsing stored questionnaires", e);
+                            }
+                        }
+                    });
+                }
             }
             
             // Создание фильтров услуг
@@ -423,35 +481,52 @@
         
         // Функция переключения вкладок
         function switchTab(tabName) {
-            // Hide all tabs
+            // Hide all tabs content
             document.getElementById('questionnaires').style.display = 'none';
             document.getElementById('create').style.display = 'none';
             
-            // Show the selected tab
+            // Show the selected tab content
             document.getElementById(tabName).style.display = 'block';
             
             // Update active tab styling
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.textContent.toLowerCase().includes(tabName === 'questionnaires' ? 'все анкеты' : 'создать')) {
-                    tab.classList.add('active');
-                }
-            });
-        }
-        
-        // Загрузка анкет из localStorage
-        function loadQuestionnaires() {
-            const savedQuestionnaires = localStorage.getItem('questionnaires');
-            if (savedQuestionnaires) {
-                questionnaires = JSON.parse(savedQuestionnaires);
-                displayQuestionnaires();
+            document.getElementById('questionnaires-tab').classList.remove('active');
+            document.getElementById('create-tab').classList.remove('active');
+            
+            if (tabName === 'questionnaires') {
+                document.getElementById('questionnaires-tab').classList.add('active');
+            } else if (tabName === 'create') {
+                document.getElementById('create-tab').classList.add('active');
             }
         }
         
-        // Сохранение анкет в localStorage
+        // Загрузка анкет
+        function loadQuestionnaires() {
+            try {
+                const savedQuestionnaires = storage.load('questionnaires');
+                if (savedQuestionnaires) {
+                    try {
+                        questionnaires = JSON.parse(savedQuestionnaires);
+                        displayQuestionnaires();
+                    } catch (e) {
+                        console.warn("Error parsing questionnaires", e);
+                        questionnaires = [];
+                    }
+                }
+            } catch (e) {
+                console.warn("Error loading questionnaires", e);
+                questionnaires = [];
+            }
+        }
+        
+        // Сохранение анкет
         function saveQuestionnaires() {
-            localStorage.setItem('questionnaires', JSON.stringify(questionnaires));
+            try {
+                storage.save('questionnaires', JSON.stringify(questionnaires));
+            } catch (e) {
+                console.warn("Error saving questionnaires", e);
+                // В случае ошибки показываем уведомление пользователю
+                alert("Не удалось сохранить данные. Возможно, ваш браузер ограничивает доступ к хранилищу.");
+            }
         }
         
         // Отображение анкет
@@ -539,7 +614,7 @@
             // Add to questionnaires array
             questionnaires.push(questionnaire);
             
-            // Save to localStorage
+            // Save questionnaires
             saveQuestionnaires();
             
             // Reset form
@@ -720,3 +795,4 @@
         }
     </script>
 </body>
+</html>
