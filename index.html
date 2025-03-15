@@ -286,24 +286,6 @@
         .hidden {
             display: none !important;
         }
-        
-        /* Стили для статуса админа */
-        .admin-badge {
-            display: inline-block;
-            background-color: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        
-        /* Стили для общего счетчика просмотров */
-        .view-counter {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
-        }
     </style>
 </head>
 <body>
@@ -312,189 +294,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('questionnaires')">Все анкеты</div>
         <div class="tab" onclick="switchTab('create')">Создать новую</div>
-    </div>// Fixed submitQuestionnaire function to ensure the button works correctly
-function submitQuestionnaire() {
-    const name = document.getElementById('name').value.trim();
-    const age = document.getElementById('age').value.trim();
-    const location = document.getElementById('location').value.trim();
-    const about = document.getElementById('about').value.trim();
-    
-    if (!name || !age || !location || !about) {
-        alert('Пожалуйста, заполните все обязательные поля.');
-        return;
-    }
-    
-    // Валидация возраста
-    if (isNaN(parseInt(age)) || parseInt(age) <= 0) {
-        alert('Пожалуйста, введите корректный возраст.');
-        return;
-    }
-    
-    // Получение услуг
-    const serviceRows = document.querySelectorAll('.service-row');
-    const services = [];
-    
-    for (const row of serviceRows) {
-        const serviceName = row.querySelector('.service-name').value.trim();
-        const servicePrice = row.querySelector('.service-price').value.trim();
-        
-        if (serviceName && servicePrice) {
-            services.push({
-                name: serviceName,
-                price: servicePrice
-            });
-        }
-    }
-    
-    // Создание анкеты
-    const newQuestionnaire = {
-        id: Date.now().toString(),
-        userId: currentUser,
-        name: name,
-        age: age,
-        location: location,
-        about: about,
-        image: base64Image,
-        services: services,
-        createdAt: new Date().toISOString(),
-        views: 0
-    };
-    
-    // Добавление анкеты
-    questionnaires.push(newQuestionnaire);
-    
-    // Сохранение в localStorage
-    saveQuestionnaires();
-    
-    // Очистка формы
-    document.getElementById('name').value = '';
-    document.getElementById('age').value = '';
-    document.getElementById('location').value = '';
-    document.getElementById('about').value = '';
-    document.getElementById('file-name').textContent = 'Файл не выбран';
-    document.getElementById('image-preview').style.display = 'none';
-    base64Image = null;
-    
-    // Сброс услуг до одной строки
-    const servicesContainer = document.getElementById('services-container');
-    servicesContainer.innerHTML = `
-        <div class="service-row">
-            <input type="text" placeholder="Название услуги" class="service-name">
-            <input type="number" placeholder="Цена, руб." class="service-price">
-        </div>
-    `;
-    
-    // Переключение на вкладку анкет
-    switchTab('questionnaires');
-    
-    // Обновление списка анкет
-    displayQuestionnaires(questionnaires);
-    
-    // Обновление фильтров услуг
-    updateServiceFilters();
-    
-    alert('Анкета успешно создана!');
-}
-
-// These are the missing or incomplete functions needed for the form to work properly
-function loadQuestionnaires() {
-    const savedQuestionnaires = localStorage.getItem('questionnaires');
-    if (savedQuestionnaires) {
-        questionnaires = JSON.parse(savedQuestionnaires);
-        displayQuestionnaires(questionnaires);
-    }
-}
-
-function saveQuestionnaires() {
-    localStorage.setItem('questionnaires', JSON.stringify(questionnaires));
-}
-
-function displayQuestionnaires(questionnairesToDisplay) {
-    const container = document.getElementById('profiles-container');
-    container.innerHTML = '';
-    
-    if (questionnairesToDisplay.length === 0) {
-        container.innerHTML = '<p>Анкеты не найдены.</p>';
-        return;
-    }
-    
-    // Сортировка анкет: сначала новые
-    questionnairesToDisplay.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    for (const q of questionnairesToDisplay) {
-        const profileCard = document.createElement('div');
-        profileCard.className = 'profile';
-        
-        let imgHtml = '';
-        if (q.image) {
-            imgHtml = `<img src="${q.image}" alt="${q.name}">`;
-        } else {
-            imgHtml = `<div style="height: 180px; background-color: #ddd; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
-                <span>Нет изображения</span>
-            </div>`;
-        }
-        
-        // Показываем кнопку удаления только владельцу анкеты или администратору
-        const deleteBtn = (q.userId === currentUser || currentUser === adminId) ? 
-            `<button class="delete-btn" onclick="deleteQuestionnaire('${q.id}')">Удалить</button>` : '';
-        
-        // Счетчик просмотров
-        const viewsCount = q.views || 0;
-        
-        profileCard.innerHTML = `
-            ${imgHtml}
-            <h3>${q.name}, ${q.age}</h3>
-            <p>${q.location}</p>
-            <p>${q.about.slice(0, 100)}${q.about.length > 100 ? '...' : ''}</p>
-            <div class="view-counter">👁 ${viewsCount} просмотров</div>
-            <button onclick="showDetailView('${q.id}')">Подробнее</button>
-            ${deleteBtn}
-        `;
-        
-        container.appendChild(profileCard);
-    }
-}
-
-function applyFilters() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    
-    // Фильтрация анкет
-    let filteredQuestionnaires = questionnaires;
-    
-    // Применение поиска по тексту
-    if (searchTerm) {
-        filteredQuestionnaires = filteredQuestionnaires.filter(q => 
-            q.about.toLowerCase().includes(searchTerm) || 
-            q.name.toLowerCase().includes(searchTerm) ||
-            q.location.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    // Применение фильтра по услугам
-    if (activeServiceFilters.length > 0) {
-        filteredQuestionnaires = filteredQuestionnaires.filter(q => {
-            // Проверяем, содержит ли анкета хотя бы одну из выбранных услуг
-            if (!q.services || q.services.length === 0) {
-                return false;
-            }
-            
-            return q.services.some(service => 
-                activeServiceFilters.includes(service.name)
-            );
-        });
-    }
-    
-    // Отображение отфильтрованных анкет
-    displayQuestionnaires(filteredQuestionnaires);
-}
-
-function searchQuestionnaires() {
-    applyFilters();
-}
-
-function clearSearch() {
-    document.getElementById('search-input').value = '';
-    applyFilters();
+    </div>
     
     <div id="questionnaires">
         <h2>Доступные анкеты</h2>
@@ -559,7 +359,6 @@ function clearSearch() {
         let currentUser = null;
         let base64Image = null;
         let activeServiceFilters = [];
-        const adminId = 'admin_1234'; // ID администратора
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -570,9 +369,6 @@ function clearSearch() {
                 currentUser = 'user_' + Date.now().toString();
                 localStorage.setItem('telegramUserId', currentUser);
             }
-            
-            // Проверка, является ли пользователь администратором
-            checkAdminStatus();
             
             // Загрузить сохраненные анкеты из localStorage
             loadQuestionnaires();
@@ -625,201 +421,421 @@ function clearSearch() {
             updateServiceFilters();
         });
         
-        // Проверка статуса администратора
-        function checkAdminStatus() {
-            // Проверяем, установлен ли специальный флаг администратора
-            if (currentUser === adminId) {
-                // Добавляем индикатор админа в верхнюю часть
-                const adminBadge = document.createElement('div');
-                adminBadge.className = 'admin-badge';
-                adminBadge.textContent = 'Администратор';
-                
-                const mainTitle = document.querySelector('.main-title');
-                mainTitle.insertAdjacentElement('afterend', adminBadge);
+        // Переключение между вкладками
+        function switchTab(tabName) {
+            document.getElementById('questionnaires').style.display = 'none';
+            document.getElementById('create').style.display = 'none';
+            
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Обновление активной вкладки
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const activeTab = Array.from(tabs).find(tab => {
+                if (tabName === 'questionnaires') return tab.textContent === 'Все анкеты';
+                if (tabName === 'create') return tab.textContent === 'Создать новую';
+                return false;
+            });
+            
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+        }
+        
+        // Добавление строки услуги
+        function addServiceRow() {
+            const container = document.getElementById('services-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'service-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Название услуги" class="service-name">
+                <input type="number" placeholder="Цена, руб." class="service-price">
+            `;
+            container.appendChild(newRow);
+        }
+        
+        // Отправка новой анкеты
+        function submitQuestionnaire() {
+            const name = document.getElementById('name').value.trim();
+            const age = document.getElementById('age').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const about = document.getElementById('about').value.trim();
+            
+            if (!name || !age || !location || !about) {
+                alert('Пожалуйста, заполните все обязательные поля.');
+                return;
             }
             
-            // Простой способ стать администратором через консоль (только для тестирования)
-            window.become
-            // Fixed submitQuestionnaire function to ensure the button works correctly
-function submitQuestionnaire() {
-    const name = document.getElementById('name').value.trim();
-    const age = document.getElementById('age').value.trim();
-    const location = document.getElementById('location').value.trim();
-    const about = document.getElementById('about').value.trim();
-    
-    if (!name || !age || !location || !about) {
-        alert('Пожалуйста, заполните все обязательные поля.');
-        return;
-    }
-    
-    // Валидация возраста
-    if (isNaN(parseInt(age)) || parseInt(age) <= 0) {
-        alert('Пожалуйста, введите корректный возраст.');
-        return;
-    }
-    
-    // Получение услуг
-    const serviceRows = document.querySelectorAll('.service-row');
-    const services = [];
-    
-    for (const row of serviceRows) {
-        const serviceName = row.querySelector('.service-name').value.trim();
-        const servicePrice = row.querySelector('.service-price').value.trim();
+            // Получение услуг
+            const serviceRows = document.querySelectorAll('.service-row');
+            const services = [];
+            
+            for (const row of serviceRows) {
+                const serviceName = row.querySelector('.service-name').value.trim();
+                const servicePrice = row.querySelector('.service-price').value.trim();
+                
+                if (serviceName && servicePrice) {
+                    services.push({
+                        name: serviceName,
+                        price: servicePrice
+                    });
+                }
+            }
+            
+            // Создание анкеты
+            const newQuestionnaire = {
+                id: Date.now().toString(),
+                userId: currentUser,
+                name: name,
+                age: age,
+                location: location,
+                about: about,
+                image: base64Image,
+                services: services,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Добавление анкеты
+            questionnaires.push(newQuestionnaire);
+            
+            // Сохранение в localStorage
+            saveQuestionnaires();
+            
+            // Очистка формы
+            document.getElementById('name').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('about').value = '';
+            document.getElementById('file-name').textContent = 'Файл не выбран';
+            document.getElementById('image-preview').style.display = 'none';
+            base64Image = null;
+            
+            // Сброс услуг до одной строки
+            const servicesContainer = document.getElementById('services-container');
+            servicesContainer.innerHTML = `
+                <div class="service-row">
+                    <input type="text" placeholder="Название услуги" class="service-name">
+                    <input type="number" placeholder="Цена, руб." class="service-price">
+                </div>
+            `;
+            
+            // Переключение на вкладку анкет
+            switchTab('questionnaires');
+            
+            // Обновление списка анкет
+            displayQuestionnaires(questionnaires);
+            
+            // Обновление фильтров услуг
+            updateServiceFilters();
+            
+            alert('Анкета успешно создана!');
+        }
         
-        if (serviceName && servicePrice) {
-            services.push({
-                name: serviceName,
-                price: servicePrice
+        // Загрузка анкет из localStorage
+        function loadQuestionnaires() {
+            const savedQuestionnaires = localStorage.getItem('questionnaires');
+            if (savedQuestionnaires) {
+                questionnaires = JSON.parse(savedQuestionnaires);
+                displayQuestionnaires(questionnaires);
+            }
+        }
+        
+        // Сохранение анкет в localStorage
+        function saveQuestionnaires() {
+            localStorage.setItem('questionnaires', JSON.stringify(questionnaires));
+        }
+        
+        // Отображение анкет
+        function displayQuestionnaires(questionnairesToDisplay) {
+            const container = document.getElementById('profiles-container');
+            container.innerHTML = '';
+            
+            if (questionnairesToDisplay.length === 0) {
+                container.innerHTML = '<p>Анкеты не найдены.</p>';
+                return;
+            }
+            
+            for (const q of questionnairesToDisplay) {
+                const profileCard = document.createElement('div');
+                profileCard.className = 'profile';
+                
+                let imgHtml = '';
+                if (q.image) {
+                    imgHtml = `<img src="${q.image}" alt="${q.name}">`;
+                } else {
+                    imgHtml = `<div style="height: 180px; background-color: #ddd; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
+                        <span>Нет изображения</span>
+                    </div>`;
+                }
+                
+                // Показываем кнопку удаления только владельцу анкеты
+                const deleteBtn = q.userId === currentUser ? 
+                    `<button class="delete-btn" onclick="deleteQuestionnaire('${q.id}')">Удалить</button>` : '';
+                
+                profileCard.innerHTML = `
+                    ${imgHtml}
+                    <h3>${q.name}, ${q.age}</h3>
+                    <p>${q.location}</p>
+                    <p>${q.about.slice(0, 100)}${q.about.length > 100 ? '...' : ''}</p>
+                    <button onclick="showDetailView('${q.id}')">Подробнее</button>
+                    ${deleteBtn}
+                `;
+                
+                container.appendChild(profileCard);
+            }
+        }
+        
+        // Удаление анкеты (только владельцем)
+        function deleteQuestionnaire(id) {
+            const questionnaire = questionnaires.find(q => q.id === id);
+            
+            if (!questionnaire) {
+                alert('Анкета не найдена.');
+                return;
+            }
+            
+            if (questionnaire.userId !== currentUser) {
+                alert('Вы можете удалять только свои анкеты.');
+                return;
+            }
+            
+            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+                questionnaires = questionnaires.filter(q => q.id !== id);
+                saveQuestionnaires();
+                displayQuestionnaires(questionnaires);
+                updateServiceFilters();
+                alert('Анкета удалена.');
+            }
+        }
+        
+        // Показать детальный просмотр
+        function showDetailView(id) {
+            const questionnaire = questionnaires.find(q => q.id === id);
+            
+            if (!questionnaire) {
+                alert('Анкета не найдена.');
+                return;
+            }
+            
+            const detailContainer = document.getElementById('detail-container');
+            const detailView = document.getElementById('detail-view');
+            
+            let imgHtml = '';
+            if (questionnaire.image) {
+                imgHtml = `<img src="${questionnaire.image}" alt="${questionnaire.name}">`;
+            } else {
+                imgHtml = `<div style="height: 250px; width: 250px; background-color: #ddd; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin: 0 auto 20px;">
+                    <span>Нет изображения</span>
+                </div>`;
+            }
+            
+            // Таблица услуг
+            let servicesHtml = '<h3>Услуги</h3>';
+            
+            if (questionnaire.services && questionnaire.services.length > 0) {
+                servicesHtml += `
+                    <table class="service-list">
+                        <thead>
+                            <tr>
+                                <th>Название услуги</th>
+                                <th>Цена, руб.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                for (const service of questionnaire.services) {
+                    servicesHtml += `
+                        <tr>
+                            <td>${service.name}</td>
+                            <td>${service.price}</td>
+                        </tr>
+                    `;
+                }
+                
+                servicesHtml += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                servicesHtml += '<p>Услуги не указаны.</p>';
+            }
+            
+            // Форматируем дату создания
+            const createdDate = new Date(questionnaire.createdAt).toLocaleDateString('ru-RU');
+            
+            detailView.innerHTML = `
+                <span class="close-btn" onclick="closeDetailView()">&times;</span>
+                <div style="text-align: center;">
+                    ${imgHtml}
+                    <h2>${questionnaire.name}, ${questionnaire.age}</h2>
+                    <h3>${questionnaire.location}</h3>
+                    <p style="margin-top: 20px; font-style: italic;">Анкета создана: ${createdDate}</p>
+                </div>
+                <h3>О себе</h3>
+                <p style="white-space: pre-line;">${questionnaire.about}</p>
+                ${servicesHtml}
+            `;
+            
+            detailContainer.style.display = 'flex';
+            
+            // Добавляем обработчик для закрытия по клику вне модального окна
+            detailContainer.addEventListener('click', function(e) {
+                if (e.target === detailContainer) {
+                    closeDetailView();
+                }
             });
         }
-    }
-    
-    // Создание анкеты
-    const newQuestionnaire = {
-        id: Date.now().toString(),
-        userId: currentUser,
-        name: name,
-        age: age,
-        location: location,
-        about: about,
-        image: base64Image,
-        services: services,
-        createdAt: new Date().toISOString(),
-        views: 0
-    };
-    
-    // Добавление анкеты
-    questionnaires.push(newQuestionnaire);
-    
-    // Сохранение в localStorage
-    saveQuestionnaires();
-    
-    // Очистка формы
-    document.getElementById('name').value = '';
-    document.getElementById('age').value = '';
-    document.getElementById('location').value = '';
-    document.getElementById('about').value = '';
-    document.getElementById('file-name').textContent = 'Файл не выбран';
-    document.getElementById('image-preview').style.display = 'none';
-    base64Image = null;
-    
-    // Сброс услуг до одной строки
-    const servicesContainer = document.getElementById('services-container');
-    servicesContainer.innerHTML = `
-        <div class="service-row">
-            <input type="text" placeholder="Название услуги" class="service-name">
-            <input type="number" placeholder="Цена, руб." class="service-price">
-        </div>
-    `;
-    
-    // Переключение на вкладку анкет
-    switchTab('questionnaires');
-    
-    // Обновление списка анкет
-    displayQuestionnaires(questionnaires);
-    
-    // Обновление фильтров услуг
-    updateServiceFilters();
-    
-    alert('Анкета успешно создана!');
-}
-
-// These are the missing or incomplete functions needed for the form to work properly
-function loadQuestionnaires() {
-    const savedQuestionnaires = localStorage.getItem('questionnaires');
-    if (savedQuestionnaires) {
-        questionnaires = JSON.parse(savedQuestionnaires);
-        displayQuestionnaires(questionnaires);
-    }
-}
-
-function saveQuestionnaires() {
-    localStorage.setItem('questionnaires', JSON.stringify(questionnaires));
-}
-
-function displayQuestionnaires(questionnairesToDisplay) {
-    const container = document.getElementById('profiles-container');
-    container.innerHTML = '';
-    
-    if (questionnairesToDisplay.length === 0) {
-        container.innerHTML = '<p>Анкеты не найдены.</p>';
-        return;
-    }
-    
-    // Сортировка анкет: сначала новые
-    questionnairesToDisplay.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    for (const q of questionnairesToDisplay) {
-        const profileCard = document.createElement('div');
-        profileCard.className = 'profile';
         
-        let imgHtml = '';
-        if (q.image) {
-            imgHtml = `<img src="${q.image}" alt="${q.name}">`;
-        } else {
-            imgHtml = `<div style="height: 180px; background-color: #ddd; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
-                <span>Нет изображения</span>
-            </div>`;
+        // Закрыть детальный просмотр
+        function closeDetailView() {
+            document.getElementById('detail-container').style.display = 'none';
         }
         
-        // Показываем кнопку удаления только владельцу анкеты или администратору
-        const deleteBtn = (q.userId === currentUser || currentUser === adminId) ? 
-            `<button class="delete-btn" onclick="deleteQuestionnaire('${q.id}')">Удалить</button>` : '';
-        
-        // Счетчик просмотров
-        const viewsCount = q.views || 0;
-        
-        profileCard.innerHTML = `
-            ${imgHtml}
-            <h3>${q.name}, ${q.age}</h3>
-            <p>${q.location}</p>
-            <p>${q.about.slice(0, 100)}${q.about.length > 100 ? '...' : ''}</p>
-            <div class="view-counter">👁 ${viewsCount} просмотров</div>
-            <button onclick="showDetailView('${q.id}')">Подробнее</button>
-            ${deleteBtn}
-        `;
-        
-        container.appendChild(profileCard);
-    }
-}
-
-function applyFilters() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    
-    // Фильтрация анкет
-    let filteredQuestionnaires = questionnaires;
-    
-    // Применение поиска по тексту
-    if (searchTerm) {
-        filteredQuestionnaires = filteredQuestionnaires.filter(q => 
-            q.about.toLowerCase().includes(searchTerm) || 
-            q.name.toLowerCase().includes(searchTerm) ||
-            q.location.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    // Применение фильтра по услугам
-    if (activeServiceFilters.length > 0) {
-        filteredQuestionnaires = filteredQuestionnaires.filter(q => {
-            // Проверяем, содержит ли анкета хотя бы одну из выбранных услуг
-            if (!q.services || q.services.length === 0) {
-                return false;
+        // Обновление фильтров услуг
+        function updateServiceFilters() {
+            const allServices = new Set();
+            
+            // Собираем все уникальные услуги
+            for (const q of questionnaires) {
+                if (q.services && q.services.length > 0) {
+                    for (const service of q.services) {
+                        allServices.add(service.name);
+                    }
+                }
             }
             
-            return q.services.some(service => 
-                activeServiceFilters.includes(service.name)
-            );
-        });
-    }
-    
-    // Отображение отфильтрованных анкет
-    displayQuestionnaires(filteredQuestionnaires);
-}
-
-function searchQuestionnaires() {
-    applyFilters();
-}
-
-function clearSearch() {
-    document.getElementById('search-input').value = '';
-    applyFilters();
+            // Отображаем фильтры
+            const filterContainer = document.getElementById('service-filters');
+            filterContainer.innerHTML = '';
+            
+            if (allServices.size === 0) {
+                filterContainer.innerHTML = '<p>Нет доступных фильтров.</p>';
+                return;
+            }
+            
+            // Заголовок
+            const filterTitle = document.createElement('div');
+            filterTitle.style.width = '100%';
+            filterTitle.innerHTML = '<h3>Фильтровать по услугам:</h3>';
+            filterContainer.appendChild(filterTitle);
+            
+            // Фильтры
+            Array.from(allServices).sort().forEach(service => {
+                const tag = document.createElement('div');
+                tag.className = 'service-tag';
+                tag.textContent = service;
+                tag.dataset.service = service;
+                
+                if (activeServiceFilters.includes(service)) {
+                    tag.classList.add('active');
+                }
+                
+                tag.addEventListener('click', function() {
+                    toggleServiceFilter(service);
+                });
+                
+                filterContainer.appendChild(tag);
+            });
+            
+            // Кнопка сброса фильтров
+            const resetBtn = document.createElement('button');
+            resetBtn.textContent = 'Сбросить фильтры';
+            resetBtn.addEventListener('click', resetServiceFilters);
+            resetBtn.style.marginTop = '10px';
+            filterContainer.appendChild(resetBtn);
+        }
+        
+        // Переключение фильтра услуг
+        function toggleServiceFilter(service) {
+            const index = activeServiceFilters.indexOf(service);
+            
+            if (index === -1) {
+                // Добавление фильтра
+                activeServiceFilters.push(service);
+            } else {
+                // Удаление фильтра
+                activeServiceFilters.splice(index, 1);
+            }
+            
+            // Обновление активных тегов
+            const tags = document.querySelectorAll('.service-tag');
+            
+            tags.forEach(tag => {
+                if (tag.dataset.service === service) {
+                    tag.classList.toggle('active');
+                }
+            });
+            
+            // Применение фильтров
+            applyFilters();
+        }
+        
+        // Сброс фильтров услуг
+        function resetServiceFilters() {
+            activeServiceFilters = [];
+            
+            // Сброс активных тегов
+            const tags = document.querySelectorAll('.service-tag');
+            tags.forEach(tag => tag.classList.remove('active'));
+            
+            // Применение фильтров
+            applyFilters();
+        }
+        
+        // Поиск анкет
+        function searchQuestionnaires() {
+            const searchText = document.getElementById('search-input').value.trim().toLowerCase();
+            
+            // Применение фильтров
+            applyFilters(searchText);
+        }
+        
+        // Очистка поиска
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            applyFilters();
+        }
+        
+        // Применение всех фильтров
+        function applyFilters(searchText = null) {
+            if (!searchText) {
+                searchText = document.getElementById('search-input').value.trim().toLowerCase();
+            }
+            
+            let filteredQuestionnaires = [...questionnaires];
+            
+            // Фильтрация по тексту (поиск по описанию)
+            if (searchText) {
+                const searchWords = searchText.split(' ').filter(word => word.length > 0);
+                
+                if (searchWords.length > 0) {
+                    filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+                        const aboutText = q.about.toLowerCase();
+                        
+                        // Проверяем, содержит ли описание любое из слов поиска
+                        return searchWords.some(word => aboutText.includes(word));
+                    });
+                }
+            }
+            
+            // Фильтрация по услугам
+            if (activeServiceFilters.length > 0) {
+                filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+                    if (!q.services || q.services.length === 0) {
+                        return false;
+                    }
+                    
+                    // Проверяем, содержит ли анкета хотя бы одну из выбранных услуг
+                    const serviceNames = q.services.map(s => s.name);
+                    return activeServiceFilters.some(filter => serviceNames.includes(filter));
+                });
+            }
+            
+            // Отображение результатов
+            displayQuestionnaires(filteredQuestionnaires);
+        }
+    </script>
+</body>
+</html>
