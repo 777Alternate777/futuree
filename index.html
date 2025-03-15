@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Приложение для анкет в Telegram</title>
+    <title>ВЗГЛЯД В БУДУЩЕЕ</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
     <style>
         /* Основные стили */
@@ -19,6 +19,13 @@
         h1, h2 {
             color: #007acc;
         }
+        /* Большой заголовок */
+        .main-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #007acc;
+        }
         /* Кнопки */
         button {
             background-color: #007acc;
@@ -29,6 +36,7 @@
             cursor: pointer;
             border-radius: 5px;
             transition: 0.3s;
+            margin: 5px;
         }
         button:hover {
             background-color: #005f99;
@@ -53,6 +61,8 @@
         .profile img {
             width: 100%;
             border-radius: 10px;
+            height: 180px;
+            object-fit: cover;
         }
         .profile h3 {
             margin: 10px 0;
@@ -65,14 +75,14 @@
             margin-top: 10px;
         }
         /* Форма добавления анкеты */
-        input {
+        input, select {
             width: 80%;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #007acc;
             border-radius: 5px;
         }
-        input:focus {
+        input:focus, select:focus {
             border-color: #005f99;
             outline: none;
         }
@@ -118,10 +128,117 @@
         #preview {
             display: none;
         }
+        
+        /* Стили для поиска */
+        .search-container {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+        
+        /* Стили для услуг */
+        .services-container {
+            margin: 15px 0;
+            text-align: left;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .service-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .service-row input {
+            flex: 3;
+            margin-right: 5px;
+        }
+        
+        .service-row input:last-child {
+            flex: 1;
+        }
+        
+        .add-service-btn {
+            background-color: #28a745;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        /* Детальный просмотр */
+        .detail-view {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        .detail-view img {
+            max-width: 300px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .service-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .service-list th, .service-list td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .service-list th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Загрузка файла */
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        .file-upload input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            background: white;
+            cursor: inherit;
+            display: block;
+        }
+        
+        .upload-btn {
+            background-color: #6c757d;
+            display: inline-block;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        
+        #file-name {
+            margin-left: 10px;
+            font-size: 14px;
+        }
+        
+        .preview-container {
+            max-width: 200px;
+            margin: 10px auto;
+        }
     </style>
 </head>
 <body>
-    <h1>Приложение для анкет в Telegram</h1>
+    <div class="main-title">ВЗГЛЯД В БУДУЩЕЕ</div>
     
     <div class="tabs">
         <div class="tab active" onclick="switchTab('questionnaires')">Все анкеты</div>
@@ -130,6 +247,13 @@
     
     <div id="questionnaires">
         <h2>Доступные анкеты</h2>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Поиск по описанию...">
+            <button onclick="searchQuestionnaires()">Поиск</button>
+            <button onclick="clearSearch()">Очистить</button>
+        </div>
+        
         <div class="container" id="profiles-container">
             <!-- Анкеты будут отображаться здесь -->
         </div>
@@ -142,50 +266,77 @@
             <input type="text" id="age" placeholder="Ваш возраст" required>
             <input type="text" id="location" placeholder="Ваше местоположение" required>
             <textarea id="about" placeholder="О себе" rows="4" required></textarea>
-            <input type="text" id="imageUrl" placeholder="URL изображения (необязательно)">
-            <div id="preview-image" style="max-width: 200px; margin: 10px auto; display: none;">
-                <img id="image-preview" style="width: 100%; border-radius: 10px;">
+            
+            <div class="file-upload">
+                <button class="upload-btn">Выбрать изображение</button>
+                <input type="file" id="image-file" accept="image/*">
             </div>
+            <span id="file-name">Файл не выбран</span>
+            
+            <div class="preview-container">
+                <img id="image-preview" style="max-width: 100%; border-radius: 10px; display: none;">
+            </div>
+            
+            <h3>Услуги</h3>
+            <div class="services-container" id="services-container">
+                <div class="service-row">
+                    <input type="text" placeholder="Название услуги" class="service-name">
+                    <input type="number" placeholder="Цена, руб." class="service-price">
+                </div>
+            </div>
+            <button class="add-service-btn" onclick="addServiceRow()">+</button>
+            
             <button onclick="submitQuestionnaire()">Отправить анкету</button>
         </div>
     </div>
     
-    <div id="preview" style="display:none">
-        <h2>Предпросмотр анкеты</h2>
-        <div class="container">
-            <div class="profile" id="preview-profile">
-                <!-- Содержимое для предпросмотра будет добавлено здесь -->
-            </div>
-        </div>
-        <button onclick="backToQuestionnaires()">Вернуться ко всем анкетам</button>
-    </div>
-
     <script>
         let tg = window.Telegram ? window.Telegram.WebApp : null;
         let questionnaires = [];
+        let currentUser = null;
+        let base64Image = null;
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+            // Генерация ID пользователя или получение сохраненного
+            if (localStorage.getItem('telegramUserId')) {
+                currentUser = localStorage.getItem('telegramUserId');
+            } else {
+                currentUser = 'user_' + Date.now().toString();
+                localStorage.setItem('telegramUserId', currentUser);
+            }
+            
             // Загрузить сохраненные анкеты из localStorage
             loadQuestionnaires();
             
-            // Настройка предпросмотра изображения
-            document.getElementById('imageUrl').addEventListener('input', function() {
-                const imageUrl = this.value.trim();
-                const previewDiv = document.getElementById('preview-image');
-                const previewImg = document.getElementById('image-preview');
-                
-                if (imageUrl) {
-                    previewImg.src = imageUrl;
-                    previewDiv.style.display = 'block';
+            // Настройка загрузки файла
+            const fileInput = document.getElementById('image-file');
+            const fileName = document.getElementById('file-name');
+            const previewImg = document.getElementById('image-preview');
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    fileName.textContent = file.name;
                     
-                    // Обработка ошибки загрузки изображения
-                    previewImg.onerror = function() {
-                        previewDiv.style.display = 'none';
-                        alert('Неверный URL изображения. Пожалуйста, укажите корректный URL.');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                        base64Image = e.target.result;
                     };
+                    reader.readAsDataURL(file);
                 } else {
-                    previewDiv.style.display = 'none';
+                    fileName.textContent = 'Файл не выбран';
+                    previewImg.style.display = 'none';
+                    base64Image = null;
+                }
+            });
+            
+            // Настройка поиска
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchQuestionnaires();
                 }
             });
             
@@ -195,14 +346,6 @@
                 
                 // Установка темы Telegram
                 document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
-                
-                // Добавление функциональности кнопки "Назад"
-                tg.BackButton.onClick(function() {
-                    if (document.getElementById('preview').style.display !== 'none') {
-                        backToQuestionnaires();
-                        tg.BackButton.hide();
-                    }
-                });
             }
         });
         
@@ -210,7 +353,6 @@
         function switchTab(tabName) {
             document.getElementById('questionnaires').style.display = 'none';
             document.getElementById('create').style.display = 'none';
-            document.getElementById('preview').style.display = 'none';
             
             document.getElementById(tabName).style.display = 'block';
             
@@ -227,11 +369,18 @@
             if (activeTab) {
                 activeTab.classList.add('active');
             }
-            
-            // Управление кнопкой "Назад" в Telegram
-            if (tg && tg.BackButton) {
-                tg.BackButton.hide();
-            }
+        }
+        
+        // Добавление строки услуги
+        function addServiceRow() {
+            const container = document.getElementById('services-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'service-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Название услуги" class="service-name">
+                <input type="number" placeholder="Цена, руб." class="service-price">
+            `;
+            container.appendChild(newRow);
         }
         
         // Отправка новой анкеты
@@ -240,21 +389,46 @@
             const age = document.getElementById('age').value.trim();
             const location = document.getElementById('location').value.trim();
             const about = document.getElementById('about').value.trim();
-            const imageUrl = document.getElementById('imageUrl').value.trim();
             
             if (!name || !age || !location || !about) {
                 alert('Пожалуйста, заполните все обязательные поля.');
                 return;
             }
             
+            // Получение услуг
+            const servicesContainer = document.getElementById('services-container');
+            const serviceRows = servicesContainer.querySelectorAll('.service-row');
+            const services = [];
+            
+            serviceRows.forEach(row => {
+                const serviceName = row.querySelector('.service-name').value.trim();
+                const servicePrice = row.querySelector('.service-price').value.trim();
+                
+                if (serviceName && servicePrice) {
+                    services.push({
+                        name: serviceName,
+                        price: servicePrice
+                    });
+                }
+            });
+            
+            // Проверка наличия хотя бы одной услуги
+            if (services.length === 0) {
+                alert('Пожалуйста, добавьте хотя бы одну услугу.');
+                return;
+            }
+            
             // Создание нового объекта анкеты
             const newQuestionnaire = {
                 id: Date.now().toString(),
+                userId: currentUser,
                 name: name,
                 age: age,
                 location: location,
                 about: about,
-                imageUrl: imageUrl || 'https://via.placeholder.com/250x150?text=Нет+изображения'
+                imageData: base64Image || 'https://via.placeholder.com/250x150?text=Нет+изображения',
+                services: services,
+                createdAt: new Date().toISOString()
             };
             
             // Добавление в массив и сохранение
@@ -266,98 +440,4 @@
             document.getElementById('age').value = '';
             document.getElementById('location').value = '';
             document.getElementById('about').value = '';
-            document.getElementById('imageUrl').value = '';
-            document.getElementById('preview-image').style.display = 'none';
-            
-            // Переключение обратно на вкладку анкет
-            switchTab('questionnaires');
-            
-            alert('Ваша анкета успешно добавлена!');
-        }
-        
-        // Загрузка анкет из localStorage
-        function loadQuestionnaires() {
-            try {
-                const saved = localStorage.getItem('telegramQuestionnaires');
-                if (saved) {
-                    questionnaires = JSON.parse(saved);
-                }
-                renderQuestionnaires();
-            } catch (e) {
-                console.error('Ошибка загрузки анкет:', e);
-                questionnaires = [];
-            }
-        }
-        
-        // Сохранение анкет в localStorage
-        function saveQuestionnaires() {
-            try {
-                localStorage.setItem('telegramQuestionnaires', JSON.stringify(questionnaires));
-                renderQuestionnaires();
-            } catch (e) {
-                console.error('Ошибка сохранения анкет:', e);
-                alert('Не удалось сохранить анкету. Пожалуйста, попробуйте еще раз.');
-            }
-        }
-        
-        // Отрисовка всех анкет
-        function renderQuestionnaires() {
-            const container = document.getElementById('profiles-container');
-            container.innerHTML = '';
-            
-            if (questionnaires.length === 0) {
-                container.innerHTML = '<p>Нет доступных анкет. Создайте новую!</p>';
-                return;
-            }
-            
-            questionnaires.forEach(q => {
-                const profileElement = document.createElement('div');
-                profileElement.className = 'profile';
-                profileElement.innerHTML = `
-                    <img src="${q.imageUrl}" alt="${q.name}" onerror="this.src='https://via.placeholder.com/250x150?text=Ошибка+изображения'">
-                    <h3>${q.name}, ${q.age}</h3>
-                    <p>${q.location}</p>
-                    <button onclick="viewQuestionnaire('${q.id}')">Посмотреть детали</button>
-                `;
-                container.appendChild(profileElement);
-            });
-        }
-        
-        // Просмотр отдельной анкеты
-        function viewQuestionnaire(id) {
-            const questionnaire = questionnaires.find(q => q.id === id);
-            if (!questionnaire) return;
-            
-            const previewProfile = document.getElementById('preview-profile');
-            previewProfile.innerHTML = `
-                <img src="${questionnaire.imageUrl}" alt="${questionnaire.name}" onerror="this.src='https://via.placeholder.com/250x150?text=Ошибка+изображения'">
-                <h3>${questionnaire.name}, ${questionnaire.age}</h3>
-                <p><strong>Местоположение:</strong> ${questionnaire.location}</p>
-                <p>${questionnaire.about}</p>
-                <button onclick="deleteQuestionnaire('${questionnaire.id}')">Удалить</button>
-            `;
-            
-            switchTab('preview');
-            
-            // Показать кнопку "Назад" в Telegram
-            if (tg && tg.BackButton) {
-                tg.BackButton.show();
-            }
-        }
-        
-        // Удаление анкеты
-        function deleteQuestionnaire(id) {
-            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
-                questionnaires = questionnaires.filter(q => q.id !== id);
-                saveQuestionnaires();
-                backToQuestionnaires();
-            }
-        }
-        
-        // Вернуться к списку анкет
-        function backToQuestionnaires() {
-            switchTab('questionnaires');
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('file-name').textContent = 'Файл не выбран';
