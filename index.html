@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ВЗГЛЯД В БУДУЩЕЕ</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
     <style>
         /* Основные стили */
         body {
@@ -287,27 +286,6 @@
         .hidden {
             display: none !important;
         }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100px;
-        }
-        
-        .loading-spinner {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #007acc;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -329,10 +307,6 @@
         
         <div class="service-filter-container" id="service-filters">
             <!-- Фильтры услуг будут тут -->
-        </div>
-        
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
         </div>
         
         <div class="container" id="profiles-container">
@@ -380,16 +354,6 @@
     </div>
     
     <script>
-        // Appwrite Configuration
-        const client = new Appwrite.Client();
-        client
-            .setEndpoint('https://cloud.appwrite.io/v1')
-            .setProject('67c5f7c100327cf444d4');
-        
-        const databases = new Appwrite.Databases(client);
-        const DATABASE_ID = '67c612a50017aa7ec1cd';
-        const COLLECTION_ID = '67c612be003cad091ef8';
-        
         let tg = window.Telegram ? window.Telegram.WebApp : null;
         let questionnaires = [];
         let currentUser = null;
@@ -406,10 +370,10 @@
                 localStorage.setItem('telegramUserId', currentUser);
             }
             
-            // Загрузить анкеты из Appwrite
+            // Загрузить сохраненные анкеты из localStorage
             loadQuestionnaires();
             
-            // Настройка загрузки файла
+            // Настройка загрузки файла (заменено URL на выбор из файлов)
             const fileBtn = document.getElementById('file-upload-btn');
             const fileInput = document.getElementById('image-file');
             const fileName = document.getElementById('file-name');
@@ -452,38 +416,10 @@
                 // Установка темы Telegram
                 document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
             }
+            
+            // Создание фильтров услуг
+            updateServiceFilters();
         });
-        
-        // Загрузка анкет из Appwrite
-        async function loadQuestionnaires() {
-            try {
-                // Показываем индикатор загрузки
-                document.getElementById('loading').style.display = 'flex';
-                document.getElementById('profiles-container').innerHTML = '';
-                
-                // Получаем список документов из коллекции
-                const response = await databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTION_ID
-                );
-                
-                // Обновляем массив анкет
-                questionnaires = response.documents;
-                
-                // Отображаем анкеты
-                displayQuestionnaires(questionnaires);
-                
-                // Обновляем фильтры услуг
-                updateServiceFilters();
-                
-                // Скрываем индикатор загрузки
-                document.getElementById('loading').style.display = 'none';
-            } catch (error) {
-                console.error('Ошибка при загрузке анкет:', error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('profiles-container').innerHTML = '<p>Ошибка при загрузке анкет. Пожалуйста, попробуйте позже.</p>';
-            }
-        }
         
         // Переключение между вкладками
         function switchTab(tabName) {
@@ -505,11 +441,6 @@
             if (activeTab) {
                 activeTab.classList.add('active');
             }
-            
-            // Если переключаемся на список анкет, обновляем их
-            if (tabName === 'questionnaires') {
-                loadQuestionnaires();
-            }
         }
         
         // Добавление строки услуги
@@ -525,7 +456,7 @@
         }
         
         // Отправка новой анкеты
-        async function submitQuestionnaire() {
+        function submitQuestionnaire() {
             const name = document.getElementById('name').value.trim();
             const age = document.getElementById('age').value.trim();
             const location = document.getElementById('location').value.trim();
@@ -552,53 +483,67 @@
                 }
             }
             
-            try {
-                // Создание документа в Appwrite
-                const newQuestionnaire = {
-                    userId: currentUser,
-                    name: name,
-                    age: age,
-                    location: location,
-                    about: about,
-                    image: base64Image,
-                    services: services,
-                    createdAt: new Date().toISOString()
-                };
-                
-                // Создаем документ в коллекции
-                await databases.createDocument(
-                    DATABASE_ID,
-                    COLLECTION_ID,
-                    'unique()',
-                    newQuestionnaire
-                );
-                
-                // Очистка формы
-                document.getElementById('name').value = '';
-                document.getElementById('age').value = '';
-                document.getElementById('location').value = '';
-                document.getElementById('about').value = '';
-                document.getElementById('file-name').textContent = 'Файл не выбран';
-                document.getElementById('image-preview').style.display = 'none';
-                base64Image = null;
-                
-                // Сброс услуг до одной строки
-                const servicesContainer = document.getElementById('services-container');
-                servicesContainer.innerHTML = `
-                    <div class="service-row">
-                        <input type="text" placeholder="Название услуги" class="service-name">
-                        <input type="number" placeholder="Цена, руб." class="service-price">
-                    </div>
-                `;
-                
-                // Переключение на вкладку анкет
-                switchTab('questionnaires');
-                
-                alert('Анкета успешно создана!');
-            } catch (error) {
-                console.error('Ошибка при создании анкеты:', error);
-                alert('Произошла ошибка при создании анкеты. Пожалуйста, попробуйте снова.');
+            // Создание анкеты
+            const newQuestionnaire = {
+                id: Date.now().toString(),
+                userId: currentUser,
+                name: name,
+                age: age,
+                location: location,
+                about: about,
+                image: base64Image,
+                services: services,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Добавление анкеты
+            questionnaires.push(newQuestionnaire);
+            
+            // Сохранение в localStorage
+            saveQuestionnaires();
+            
+            // Очистка формы
+            document.getElementById('name').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('about').value = '';
+            document.getElementById('file-name').textContent = 'Файл не выбран';
+            document.getElementById('image-preview').style.display = 'none';
+            base64Image = null;
+            
+            // Сброс услуг до одной строки
+            const servicesContainer = document.getElementById('services-container');
+            servicesContainer.innerHTML = `
+                <div class="service-row">
+                    <input type="text" placeholder="Название услуги" class="service-name">
+                    <input type="number" placeholder="Цена, руб." class="service-price">
+                </div>
+            `;
+            
+            // Переключение на вкладку анкет
+            switchTab('questionnaires');
+            
+            // Обновление списка анкет
+            displayQuestionnaires(questionnaires);
+            
+            // Обновление фильтров услуг
+            updateServiceFilters();
+            
+            alert('Анкета успешно создана!');
+        }
+        
+        // Загрузка анкет из localStorage
+        function loadQuestionnaires() {
+            const savedQuestionnaires = localStorage.getItem('questionnaires');
+            if (savedQuestionnaires) {
+                questionnaires = JSON.parse(savedQuestionnaires);
+                displayQuestionnaires(questionnaires);
             }
+        }
+        
+        // Сохранение анкет в localStorage
+        function saveQuestionnaires() {
+            localStorage.setItem('questionnaires', JSON.stringify(questionnaires));
         }
         
         // Отображение анкет
@@ -626,14 +571,14 @@
                 
                 // Показываем кнопку удаления только владельцу анкеты
                 const deleteBtn = q.userId === currentUser ? 
-                    `<button class="delete-btn" onclick="deleteQuestionnaire('${q.$id}')">Удалить</button>` : '';
+                    `<button class="delete-btn" onclick="deleteQuestionnaire('${q.id}')">Удалить</button>` : '';
                 
                 profileCard.innerHTML = `
                     ${imgHtml}
                     <h3>${q.name}, ${q.age}</h3>
                     <p>${q.location}</p>
                     <p>${q.about.slice(0, 100)}${q.about.length > 100 ? '...' : ''}</p>
-                    <button onclick="showDetailView('${q.$id}')">Подробнее</button>
+                    <button onclick="showDetailView('${q.id}')">Подробнее</button>
                     ${deleteBtn}
                 `;
                 
@@ -642,8 +587,8 @@
         }
         
         // Удаление анкеты (только владельцем)
-        async function deleteQuestionnaire(id) {
-            const questionnaire = questionnaires.find(q => q.$id === id);
+        function deleteQuestionnaire(id) {
+            const questionnaire = questionnaires.find(q => q.id === id);
             
             if (!questionnaire) {
                 alert('Анкета не найдена.');
@@ -656,28 +601,17 @@
             }
             
             if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
-                try {
-                    // Удаляем документ из коллекции
-                    await databases.deleteDocument(
-                        DATABASE_ID,
-                        COLLECTION_ID,
-                        id
-                    );
-                    
-                    // Обновляем список анкет
-                    loadQuestionnaires();
-                    
-                    alert('Анкета удалена.');
-                } catch (error) {
-                    console.error('Ошибка при удалении анкеты:', error);
-                    alert('Произошла ошибка при удалении анкеты. Пожалуйста, попробуйте снова.');
-                }
+                questionnaires = questionnaires.filter(q => q.id !== id);
+                saveQuestionnaires();
+                displayQuestionnaires(questionnaires);
+                updateServiceFilters();
+                alert('Анкета удалена.');
             }
         }
         
         // Показать детальный просмотр
         function showDetailView(id) {
-            const questionnaire = questionnaires.find(q => q.$id === id);
+            const questionnaire = questionnaires.find(q => q.id === id);
             
             if (!questionnaire) {
                 alert('Анкета не найдена.');
@@ -875,3 +809,33 @@
             // Фильтрация по тексту (поиск по описанию)
             if (searchText) {
                 const searchWords = searchText.split(' ').filter(word => word.length > 0);
+                
+                if (searchWords.length > 0) {
+                    filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+                        const aboutText = q.about.toLowerCase();
+                        
+                        // Проверяем, содержит ли описание любое из слов поиска
+                        return searchWords.some(word => aboutText.includes(word));
+                    });
+                }
+            }
+            
+            // Фильтрация по услугам
+            if (activeServiceFilters.length > 0) {
+                filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+                    if (!q.services || q.services.length === 0) {
+                        return false;
+                    }
+                    
+                    // Проверяем, содержит ли анкета хотя бы одну из выбранных услуг
+                    const serviceNames = q.services.map(s => s.name);
+                    return activeServiceFilters.some(filter => serviceNames.includes(filter));
+                });
+            }
+            
+            // Отображение результатов
+            displayQuestionnaires(filteredQuestionnaires);
+        }
+    </script>
+</body>
+</html>
