@@ -906,3 +906,70 @@ function clearSearch() {
     document.getElementById('search-input').value = '';
     applyFilters();
 }
+// This script should be placed at the end of your HTML document, just before the closing </body> tag
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix for the existing button click handler
+    document.querySelector('button[onclick="submitQuestionnaire()"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        submitQuestionnaire();
+    });
+    
+    // Make sure all tab switching works
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.textContent.trim() === 'Все анкеты' ? 'questionnaires' : 'create';
+            switchTab(tabName);
+        });
+    });
+    
+    // Complete the missing functions
+    window.applyFilters = function() {
+        const searchText = document.getElementById('search-input').value.toLowerCase().trim();
+        
+        let filteredQuestionnaires = questionnaires;
+        
+        // Фильтрация по тексту поиска
+        if (searchText) {
+            filteredQuestionnaires = filteredQuestionnaires.filter(q => 
+                q.name.toLowerCase().includes(searchText) || 
+                q.about.toLowerCase().includes(searchText) || 
+                q.location.toLowerCase().includes(searchText)
+            );
+        }
+        
+        // Фильтрация по услугам
+        if (activeServiceFilters.length > 0) {
+            filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+                if (!q.services || q.services.length === 0) return false;
+                
+                // Анкета должна содержать хотя бы одну из выбранных услуг
+                return q.services.some(service => 
+                    activeServiceFilters.includes(service.name)
+                );
+            });
+        }
+        
+        // Отображение отфильтрованных анкет
+        displayQuestionnaires(filteredQuestionnaires);
+    };
+    
+    window.searchQuestionnaires = function() {
+        applyFilters();
+    };
+    
+    window.clearSearch = function() {
+        document.getElementById('search-input').value = '';
+        applyFilters();
+    };
+    
+    window.resetServiceFilters = function() {
+        activeServiceFilters = [];
+        
+        // Сброс активных тегов
+        const tags = document.querySelectorAll('.service-tag');
+        tags.forEach(tag => tag.classList.remove('active'));
+        
+        // Применение фильтров
+        applyFilters();
+    };
+});
