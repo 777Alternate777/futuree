@@ -679,6 +679,13 @@
             `;
             
             detailContainer.style.display = 'flex';
+            
+            // Добавляем обработчик для закрытия по клику вне модального окна
+            detailContainer.addEventListener('click', function(e) {
+                if (e.target === detailContainer) {
+                    closeDetailView();
+                }
+            });
         }
         
         // Закрыть детальный просмотр
@@ -807,7 +814,7 @@
                     filteredQuestionnaires = filteredQuestionnaires.filter(q => {
                         const aboutText = q.about.toLowerCase();
                         
-                        // Проверяем, содержит ли описание все слова из поиска
+                        // Проверяем, содержит ли описание любое из слов поиска
                         return searchWords.some(word => aboutText.includes(word));
                     });
                 }
