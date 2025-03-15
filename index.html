@@ -9,16 +9,18 @@
         /* Основные стили */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff; /* Светло-голубой фон */
+            background-color: #f0f8ff;
             color: #333;
             text-align: center;
             margin: 0;
             padding: 0;
         }
+        
         /* Заголовки */
         h1, h2 {
             color: #007acc;
         }
+        
         /* Большой заголовок */
         .main-title {
             font-size: 36px;
@@ -26,6 +28,7 @@
             margin: 20px 0;
             color: #007acc;
         }
+        
         /* Кнопки */
         button {
             background-color: #007acc;
@@ -38,9 +41,11 @@
             transition: 0.3s;
             margin: 5px;
         }
+        
         button:hover {
             background-color: #005f99;
         }
+        
         /* Контейнер для анкет */
         .container {
             display: flex;
@@ -49,6 +54,7 @@
             gap: 20px;
             padding: 20px;
         }
+        
         /* Карточка анкеты */
         .profile {
             background: white;
@@ -58,22 +64,27 @@
             width: 250px;
             text-align: center;
         }
+        
         .profile img {
             width: 100%;
             border-radius: 10px;
             height: 180px;
             object-fit: cover;
         }
+        
         .profile h3 {
             margin: 10px 0;
         }
+        
         .profile p {
             color: #555;
         }
+        
         .profile button {
             width: 100%;
             margin-top: 10px;
         }
+        
         /* Форма добавления анкеты */
         input, select {
             width: 80%;
@@ -82,6 +93,7 @@
             border: 1px solid #007acc;
             border-radius: 5px;
         }
+        
         input:focus, select:focus {
             border-color: #005f99;
             outline: none;
@@ -131,14 +143,6 @@
             max-width: 500px;
         }
         
-        .filters-container {
-            margin: 20px auto;
-            max-width: 500px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
         /* Стили для услуг */
         .services-container {
             margin: 15px 0;
@@ -178,8 +182,6 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             display: none;
-            justify-content: center;
-            align-items: center;
             z-index: 1000;
             overflow-y: auto;
         }
@@ -229,7 +231,6 @@
             position: relative;
             overflow: hidden;
             display: inline-block;
-            cursor: pointer;
         }
         
         .file-upload input[type=file] {
@@ -289,8 +290,8 @@
     <div class="main-title">ВЗГЛЯД В БУДУЩЕЕ</div>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('questionnaires')">Все анкеты</div>
-        <div class="tab" onclick="switchTab('create')">Создать новую</div>
+        <div class="tab active" id="tab-questionnaires" onclick="switchTab('questionnaires')">Все анкеты</div>
+        <div class="tab" id="tab-create" onclick="switchTab('create')">Создать новую</div>
     </div>
     
     <div id="questionnaires">
@@ -320,7 +321,7 @@
             <textarea id="about" placeholder="О себе" rows="4" required></textarea>
             
             <div class="file-upload">
-                <button class="upload-btn">Выбрать изображение</button>
+                <button class="upload-btn" type="button">Выбрать изображение</button>
                 <input type="file" id="image-file" accept="image/*">
             </div>
             <span id="file-name">Файл не выбран</span>
@@ -336,9 +337,9 @@
                     <input type="number" placeholder="Цена, руб." class="service-price">
                 </div>
             </div>
-            <button class="add-service-btn" onclick="addServiceRow()">+</button>
+            <button class="add-service-btn" type="button" onclick="addServiceRow()">+</button>
             
-            <button onclick="submitQuestionnaire()">Отправить анкету</button>
+            <button type="button" onclick="submitQuestionnaire()">Отправить анкету</button>
         </div>
     </div>
     
@@ -351,14 +352,17 @@
     </div>
     
     <script>
+        // Глобальные переменные
         let tg = window.Telegram ? window.Telegram.WebApp : null;
         let questionnaires = [];
         let currentUser = null;
         let base64Image = null;
         let activeServiceFilters = [];
         
-        // Инициализация
+        // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
             // Генерация ID пользователя или получение сохраненного
             if (localStorage.getItem('telegramUserId')) {
                 currentUser = localStorage.getItem('telegramUserId');
@@ -415,28 +419,29 @@
         
         // Переключение между вкладками
         function switchTab(tabName) {
+            console.log("Switching to tab:", tabName);
+            
+            // Скрыть все вкладки
             document.getElementById('questionnaires').style.display = 'none';
             document.getElementById('create').style.display = 'none';
             
+            // Показать выбранную вкладку
             document.getElementById(tabName).style.display = 'block';
             
             // Обновление активной вкладки
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab-questionnaires').classList.remove('active');
+            document.getElementById('tab-create').classList.remove('active');
             
-            const activeTab = Array.from(tabs).find(tab => {
-                if (tabName === 'questionnaires') return tab.textContent === 'Все анкеты';
-                if (tabName === 'create') return tab.textContent === 'Создать новую';
-                return false;
-            });
-            
-            if (activeTab) {
-                activeTab.classList.add('active');
+            if (tabName === 'questionnaires') {
+                document.getElementById('tab-questionnaires').classList.add('active');
+            } else if (tabName === 'create') {
+                document.getElementById('tab-create').classList.add('active');
             }
         }
         
         // Добавление строки услуги
         function addServiceRow() {
+            console.log("Adding service row");
             const container = document.getElementById('services-container');
             const newRow = document.createElement('div');
             newRow.className = 'service-row';
@@ -449,14 +454,10 @@
         
         // Отправка новой анкеты
         function submitQuestionnaire() {
+            console.log("Submitting questionnaire");
             const name = document.getElementById('name').value.trim();
             const age = document.getElementById('age').value.trim();
             const location = document.getElementById('location').value.trim();
             const about = document.getElementById('about').value.trim();
             
-            if (!name || !age || !location || !about) {
-                alert('Пожалуйста, заполните все обязательные поля.');
-                return;
-            }
-            
-            //
+            if (!name ||
