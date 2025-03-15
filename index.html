@@ -125,14 +125,18 @@
             color: white;
         }
         
-        #preview {
-            display: none;
-        }
-        
         /* Стили для поиска */
         .search-container {
             margin: 20px auto;
             max-width: 500px;
+        }
+        
+        .filters-container {
+            margin: 20px auto;
+            max-width: 500px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         
         /* Стили для услуг */
@@ -166,11 +170,36 @@
         }
         
         /* Детальный просмотр */
+        .detail-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
         .detail-view {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 20px auto;
             padding: 20px;
             background: white;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007acc;
         }
         
         .detail-view img {
@@ -235,6 +264,25 @@
             max-width: 200px;
             margin: 10px auto;
         }
+        
+        .service-tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .service-tag.active {
+            background-color: #007acc;
+            color: white;
+        }
+        
+        .service-filter-container {
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -252,6 +300,10 @@
             <input type="text" id="search-input" placeholder="Поиск по описанию...">
             <button onclick="searchQuestionnaires()">Поиск</button>
             <button onclick="clearSearch()">Очистить</button>
+        </div>
+        
+        <div class="service-filter-container" id="service-filters">
+            <!-- Фильтры услуг будут тут -->
         </div>
         
         <div class="container" id="profiles-container">
@@ -290,11 +342,20 @@
         </div>
     </div>
     
+    <!-- Детальный просмотр -->
+    <div class="detail-container" id="detail-container">
+        <div class="detail-view" id="detail-view">
+            <span class="close-btn" onclick="closeDetailView()">&times;</span>
+            <!-- Детальная информация будет тут -->
+        </div>
+    </div>
+    
     <script>
         let tg = window.Telegram ? window.Telegram.WebApp : null;
         let questionnaires = [];
         let currentUser = null;
         let base64Image = null;
+        let activeServiceFilters = [];
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -347,6 +408,9 @@
                 // Установка темы Telegram
                 document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
             }
+            
+            // Создание фильтров услуг
+            updateServiceFilters();
         });
         
         // Переключение между вкладками
@@ -392,52 +456,3 @@
             
             if (!name || !age || !location || !about) {
                 alert('Пожалуйста, заполните все обязательные поля.');
-                return;
-            }
-            
-            // Получение услуг
-            const servicesContainer = document.getElementById('services-container');
-            const serviceRows = servicesContainer.querySelectorAll('.service-row');
-            const services = [];
-            
-            serviceRows.forEach(row => {
-                const serviceName = row.querySelector('.service-name').value.trim();
-                const servicePrice = row.querySelector('.service-price').value.trim();
-                
-                if (serviceName && servicePrice) {
-                    services.push({
-                        name: serviceName,
-                        price: servicePrice
-                    });
-                }
-            });
-            
-            // Проверка наличия хотя бы одной услуги
-            if (services.length === 0) {
-                alert('Пожалуйста, добавьте хотя бы одну услугу.');
-                return;
-            }
-            
-            // Создание нового объекта анкеты
-            const newQuestionnaire = {
-                id: Date.now().toString(),
-                userId: currentUser,
-                name: name,
-                age: age,
-                location: location,
-                about: about,
-                imageData: base64Image || 'https://via.placeholder.com/250x150?text=Нет+изображения',
-                services: services,
-                createdAt: new Date().toISOString()
-            };
-            
-            // Добавление в массив и сохранение
-            questionnaires.push(newQuestionnaire);
-            saveQuestionnaires();
-            
-            // Очистка формы
-            document.getElementById('name').value = '';
-            document.getElementById('age').value = '';
-            document.getElementById('location').value = '';
-            document.getElementById('about').value = '';
-            document.getElementById('file-name').textContent = 'Файл не выбран';
