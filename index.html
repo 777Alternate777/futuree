@@ -290,6 +290,10 @@
         .tab-content.active {
             display: block;
         }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -400,28 +404,48 @@
             }
         }
         
-        // Загрузка анкет из localStorage
-        function loadQuestionnaires() {
-            try {
-                const savedQuestionnaires = localStorage.getItem('questionnaires');
-                if (savedQuestionnaires) {
-                    questionnaires = JSON.parse(savedQuestionnaires);
-                    console.log("Loaded questionnaires:", questionnaires.length);
-                } else {
-                    console.log("No saved questionnaires found");
-                    questionnaires = [];
-                }
+        // Инициализация Telegram WebApp
+        function initializeTelegramWebApp() {
+            if (tg) {
+                console.log("Telegram WebApp initialized");
+                tg.expand();
                 
-                // Отображаем загруженные анкеты
-                displayQuestionnaires(questionnaires);
-                
-                // Обновляем фильтры услуг
-                updateServiceFilters();
-            } catch (error) {
-                console.error("Error loading questionnaires:", error);
-                questionnaires = [];
-                displayQuestionnaires([]);
+                // Установка темы Telegram
+                document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
+            } else {
+                console.log("Telegram WebApp not available");
             }
+        }
+        
+        // Настройка загрузки файла
+        function setupFileUpload() {
+            const fileBtn = document.getElementById('file-upload-btn');
+            const fileInput = document.getElementById('image-file');
+            const fileName = document.getElementById('file-name');
+            const previewImg = document.getElementById('image-preview');
+            
+            fileBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    fileName.textContent = file.name;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                        base64Image = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    fileName.textContent = 'Файл не выбран';
+                    previewImg.style.display = 'none';
+                    base64Image = null;
+                }
+            });
         }
         
         // Настройка обработчиков событий
@@ -442,15 +466,4 @@
             document.getElementById('clear-button').addEventListener('click', clearSearch);
             document.getElementById('search-input').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    searchQuestionnaires();
-                }
-            });
-            
-            // Обработчик для добавления строки услуги
-            document.getElementById('add-service-button').addEventListener('click', addServiceRow);
-            
-            // Обработчик для отправки анкеты
-            document.getElementById('submit-button').addEventListener('click', submitQuestionnaire);
-            
-            // Обработчик для закрытия детального просмотра
-            document.getElementById('close-detail-button').addEventListener('click', closeDetailView);
+                
