@@ -853,13 +853,56 @@
             applyFilters();
         }
         
-        // Сброс фильтров услуг
-        function resetServiceFilters() {
-            activeServiceFilters = [];
+      // Sброс фильтров услуг
+function resetServiceFilters() {
+    activeServiceFilters = [];
+    
+    // Сброс активных тегов
+    const tags = document.querySelectorAll('.service-tag');
+    tags.forEach(tag => tag.classList.remove('active'));
+    
+    // Применение фильтров
+    applyFilters();
+}
+
+// Применение фильтров (поиск + фильтры услуг)
+function applyFilters() {
+    const searchText = document.getElementById('search-input').value.toLowerCase().trim();
+    
+    let filteredQuestionnaires = questionnaires;
+    
+    // Фильтрация по тексту поиска
+    if (searchText) {
+        filteredQuestionnaires = filteredQuestionnaires.filter(q => 
+            q.name.toLowerCase().includes(searchText) || 
+            q.about.toLowerCase().includes(searchText) || 
+            q.location.toLowerCase().includes(searchText)
+        );
+    }
+    
+    // Фильтрация по услугам
+    if (activeServiceFilters.length > 0) {
+        filteredQuestionnaires = filteredQuestionnaires.filter(q => {
+            if (!q.services || q.services.length === 0) return false;
             
-            // Сброс активных тегов
-            const tags = document.querySelectorAll('.service-tag');
-            tags.forEach(tag => tag.classList.remove('active'));
-            
-            // Применение фильтров
-            applyFilters();
+            // Анкета должна содержать хотя бы одну из выбранных услуг
+            return q.services.some(service => 
+                activeServiceFilters.includes(service.name)
+            );
+        });
+    }
+    
+    // Отображение отфильтрованных анкет
+    displayQuestionnaires(filteredQuestionnaires);
+}
+
+// Поиск по анкетам
+function searchQuestionnaires() {
+    applyFilters();
+}
+
+// Очистка поиска
+function clearSearch() {
+    document.getElementById('search-input').value = '';
+    applyFilters();
+}
