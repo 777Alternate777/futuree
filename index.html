@@ -295,10 +295,23 @@
     
     <div class="tabs">
         <div class="tab active" id="questionnaires-tab" onclick="switchTab('questionnaires')">Все анкеты</div>
-        <div class="tab" id="create-tab" onclick="switchTab('create')">Создать новую</div>
-    </div>
+       <div class="tabs">
+    <div class="tab active" id="questionnaires-tab">Все анкеты</div>
+    <div class="tab" id="create-tab">Создать новую</div>
+</div>
+   document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to tabs
+    document.getElementById('questionnaires-tab').addEventListener('click', function() {
+        switchTab('questionnaires');
+    });
     
-    <div id="questionnaires">
+    document.getElementById('create-tab').addEventListener('click', function() {
+        switchTab('create');
+    });
+    
+    // Rest of your initialization code
+});
+        <div id="questionnaires">
         <h2>Доступные анкеты</h2>
         
         <div class="search-container">
