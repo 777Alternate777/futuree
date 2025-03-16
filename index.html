@@ -292,23 +292,14 @@
 </head>
 <body>
     <div class="main-title">ВЗГЛЯД В БУДУЩЕЕ</div>
-    
-    <div class="tabs">
-        <div class="tab active" id="questionnaires-tab" onclick="switchTab('questionnaires')">Все анкеты</div>
-       <div class="tabs">
-    <div class="tab active" id="questionnaires-tab">Все анкеты</div>
-    <div class="tab" id="create-tab">Создать новую</div>
-</div>
-   document.addEventListener('DOMContentLoaded', function() {
-    // Add event listeners to tabs
-    document.getElementById('questionnaires-tab').addEventListener('click', function() {
-        switchTab('questionnaires');
-    });
-    
+         
     document.getElementById('create-tab').addEventListener('click', function() {
         switchTab('create');
     });
-    
+    <div class="tabs">
+    <div class="tab active" id="questionnaires-tab">Все анкеты</div>
+    <div class="tab" id="create-tab">Создать новую</div>
+</div>
     // Rest of your initialization code
 });
         <div id="questionnaires">
@@ -372,10 +363,10 @@
         // Appwrite Configuration
         const appwrite = {
             endpoint: 'https://cloud.appwrite.io/v1', // Replace with your Appwrite endpoint
-            projectId: 'your-project-id',            // Replace with your project ID
-            databaseId: 'your-database-id',          // Replace with your database ID
-            collectionId: 'your-collection-id',      // Replace with your collection ID
-            bucketId: 'your-bucket-id',              // Replace with your bucket ID for images
+            projectId: '67c5f7c100327cf444d4',            // Replace with your project ID
+            databaseId: '67c612a50017aa7ec1cd',          // Replace with your database ID
+            collectionId: '67c612be003cad091ef8',      // Replace with your collection ID
+            bucketId: '67d6fb7f003412c9d5f6',              // Replace with your bucket ID for images
             
             client: null,
             account: null,
@@ -473,11 +464,22 @@
                     throw error;
                 }
             },
-            
             // Delete a questionnaire
-            deleteQuestionnaire: async function(questionnaireId) {
-                try {
-                    // Delete a questionnaire
+deleteQuestionnaire: async function(questionnaireId) {
+    try {
+        // Delete the document
+        await this.databases.deleteDocument(
+            this.databaseId,
+            this.collectionId,
+            questionnaireId
+        );
+        
+        return true;
+    } catch (error) {
+        console.error('Failed to delete questionnaire:', error);
+        return false;
+    }
+}
           // Обновление фильтров услуг
 function updateServiceFilters() {
     // Get all unique services
@@ -753,6 +755,14 @@ async function deleteQuestionnaire(id) {
             
             // Создание фильтров услуг
             updateServiceFilters();
+       // Add event listeners to tabs
+document.getElementById('questionnaires-tab').addEventListener('click', function() {
+    switchTab('questionnaires');
+});
+
+document.getElementById('create-tab').addEventListener('click', function() {
+    switchTab('create');
+});
         });
         
         // Загрузка анкет
@@ -1004,36 +1014,3 @@ async function deleteQuestionnaire(id) {
             
             displayQuestionnaires();
         }
-        
-        // Обновление фильтров услуг
-        function updateServiceFilters() {
-            // Get all unique services
-            const allServices = new Set();
-            questionnaires.forEach(q => {
-                if (q.services) {
-                    q.services.forEach(service => {
-                        if (service.name) {
-                            allServices.add(service.name.toLowerCase());
-                        }
-                    });
-                }
-            });
-            
-            // Create filter tags
-           // Delete a questionnaire
-deleteQuestionnaire: async function(questionnaireId) {
-    try {
-        // Delete the document
-        await this.databases.deleteDocument(
-            this.databaseId,
-            this.collectionId,
-            questionnaireId
-        );
-        
-        return true;
-    } catch (error) {
-        console.error('Failed to delete questionnaire:', error);
-        return false;
-    }
-}
-                  if (!activeServiceFilters.
