@@ -465,21 +465,138 @@
             deleteQuestionnaire: async function(questionnaireId) {
                 try {
                     // Delete a questionnaire
-            deleteQuestionnaire: async function(questionnaireId) {
-                try {
-                    // Delete the document
-                    await this.databases.deleteDocument(
-                        this.databaseId,
-                        this.collectionId,
-                        questionnaireId
-                    );
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Failed to delete questionnaire:', error);
-                    return false;
+          // Обновление фильтров услуг
+function updateServiceFilters() {
+    // Get all unique services
+    const allServices = new Set();
+    questionnaires.forEach(q => {
+        if (q.services) {
+            q.services.forEach(service => {
+                if (service.name) {
+                    allServices.add(service.name.toLowerCase());
                 }
-            },
+            });
+        }
+    });
+    
+    // Create filter tags
+    const filterContainer = document.getElementById('service-filters');
+    filterContainer.innerHTML = '';
+    
+    if (allServices.size === 0) {
+        return;
+    }
+    
+    Array.from(allServices).sort().forEach(service => {
+        const tag = document.createElement('span');
+        tag.className = 'service-tag';
+        tag.textContent = service;
+        tag.addEventListener('click', () => {
+            tag.classList.toggle('active');
+            
+            if (tag.classList.contains('active')) {
+                // Add to active filters
+                if (!activeServiceFilters.includes(service)) {
+                    activeServiceFilters.push(service);
+                }
+            } else {
+                // Remove from active filters
+                activeServiceFilters = activeServiceFilters.filter(s => s !== service);
+            }
+            
+            // Apply filters
+            searchQuestionnaires();
+        });
+        filterContainer.appendChild(tag);
+    });
+}
+
+// Open detailed view of questionnaire
+function openDetailView(index) {
+    const questionnaire = questionnaires[index];
+    const detailContainer = document.getElementById('detail-container');
+    const detailView = document.getElementById('detail-view');
+    
+    const imgSrc = questionnaire.image || '/api/placeholder/300/200';
+    
+    let servicesHTML = '';
+    if (questionnaire.services && questionnaire.services.length > 0) {
+        servicesHTML = `
+            <h3>Услуги</h3>
+            <table class="service-list">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Цена (руб.)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${questionnaire.services.map(service => `
+                        <tr>
+                            <td>${service.name}</td>
+                            <td>${service.price}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+    
+    let deleteButton = '';
+    if (questionnaire.userId === currentUser) {
+        deleteButton = `<button class="delete-btn" onclick="deleteQuestionnaire('${questionnaire.id}')">Удалить анкету</button>`;
+    }
+    
+    detailView.innerHTML = `
+        <span class="close-btn" onclick="closeDetailView()">&times;</span>
+        <img src="${imgSrc}" alt="${questionnaire.name}">
+        <h2>${questionnaire.name}, ${questionnaire.age}</h2>
+        <p><strong>Местоположение:</strong> ${questionnaire.location}</p>
+        <h3>О себе</h3>
+        <p>${questionnaire.about}</p>
+        ${servicesHTML}
+        ${deleteButton}
+    `;
+    
+    detailContainer.style.display = 'flex';
+}
+
+// Close detailed view
+function closeDetailView() {
+    document.getElementById('detail-container').style.display = 'none';
+}
+
+// Delete questionnaire
+async function deleteQuestionnaire(id) {
+    if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+        try {
+            if (appwriteEnabled) {
+                // Delete from Appwrite
+                const success = await appwrite.deleteQuestionnaire(id);
+                if (!success) {
+                    throw new Error('Failed to delete questionnaire');
+                }
+            } else {
+                // Delete from local array
+                questionnaires = questionnaires.filter(q => q.id !== id);
+                // Save updated questionnaires
+                await saveQuestionnaires();
+            }
+            
+            // Close detail view
+            closeDetailView();
+            // Refresh questionnaires display
+            displayQuestionnaires();
+            // Update service filters
+            updateServiceFilters();
+            
+            alert('Анкета успешно удалена');
+        } catch (error) {
+            console.error('Error deleting questionnaire:', error);
+            alert('Произошла ошибка при удалении анкеты');
+        }
+    }
+}
             
             // Get image URL from storage
             getImageUrl: function(imageId) {
@@ -890,20 +1007,20 @@
             });
             
             // Create filter tags
-            const filterContainer = document.getElementById('service-filters');
-            filterContainer.innerHTML = '';
-            
-            if (allServices.size === 0) {
-                return;
-            }
-            
-            Array.from(allServices).sort().forEach(service => {
-                const tag = document.createElement('span');
-                tag.className = 'service-tag';
-                tag.textContent = service;
-                tag.addEventListener('click', () => {
-                    tag.classList.toggle('active');
-                    
-                    if (tag.classList.contains('active')) {
-                        // Add to active filters
-                        if (!activeServiceFilters.
+           // Delete a questionnaire
+deleteQuestionnaire: async function(questionnaireId) {
+    try {
+        // Delete the document
+        await this.databases.deleteDocument(
+            this.databaseId,
+            this.collectionId,
+            questionnaireId
+        );
+        
+        return true;
+    } catch (error) {
+        console.error('Failed to delete questionnaire:', error);
+        return false;
+    }
+}
+                  if (!activeServiceFilters.
