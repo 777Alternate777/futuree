@@ -1,129 +1,909 @@
-ᅠᅠ, [16.03.2025 17:55]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анкеты</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <title>ВЗГЛЯД В БУДУЩЕЕ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
+    <!-- Add Appwrite SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
+    <style>
+        /* Основные стили */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Светло-голубой фон */
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        /* Заголовки */
+        h1, h2 {
+            color: #007acc;
+        }
+        /* Большой заголовок */
+        .main-title {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #007acc;
+            text-transform: uppercase;
+        }
+        /* Кнопки */
+        button {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #005f99;
+        }
+        /* Контейнер для анкет */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        /* Карточка анкеты */
+        .profile {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            width: 250px;
+            text-align: center;
+        }
+        .profile img {
+            width: 100%;
+            border-radius: 10px;
+            height: 180px;
+            object-fit: cover;
+        }
+        .profile h3 {
+            margin: 10px 0;
+        }
+        .profile p {
+            color: #555;
+        }
+        .profile button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        /* Форма добавления анкеты */
+        input, select {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+        }
+        input:focus, select:focus {
+            border-color: #005f99;
+            outline: none;
+        }
+        
+        /* Дополнительные стили */
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        
+        textarea {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            background: #ddd;
+            margin: 0 5px;
+        }
+        
+        .tab.active {
+            background: #007acc;
+            color: white;
+        }
+        
+        /* Стили для поиска */
+        .search-container {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+        
+        .filters-container {
+            margin: 20px auto;
+            max-width: 500px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        /* Стили для услуг */
+        .services-container {
+            margin: 15px 0;
+            text-align: left;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .service-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .service-row input {
+            flex: 3;
+            margin-right: 5px;
+        }
+        
+        .service-row input:last-child {
+            flex: 1;
+        }
+        
+        .add-service-btn {
+            background-color: #28a745;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        /* Детальный просмотр */
+        .detail-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .detail-view {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007acc;
+        }
+        
+        .detail-view img {
+            max-width: 300px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .service-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .service-list th, .service-list td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .service-list th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Изменили стиль загрузки файла */
+        .file-upload-container {
+            margin: 15px 0;
+        }
+        
+        .file-upload-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .file-upload-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        #file-name {
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .preview-container {
+            max-width: 200px;
+            margin: 10px auto;
+        }
+        
+        .service-tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .service-tag.active {
+            background-color: #007acc;
+            color: white;
+        }
+        
+        .service-filter-container {
+            margin: 15px 0;
+        }
+        
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Взгляд в будущее</h1>
-    </header>
-
-    <main>
-        <!-- Твоя оригинальная кнопка -->
-        <button id="openFormBtn" class="add-btn">Создать анкету</button>
-
-        <!-- Оригинальная форма (скрытая) -->
-        <div id="form-container" style="display: none;">
-            <h2>Добавить анкету</h2>
-            <input type="text" id="nameInput" placeholder="Имя"><br>
-            <input type="text" id="descInput" placeholder="Описание"><br>
-            <input type="number" id="priceInput" placeholder="Цена за 1 час (₽)"><br>
-            <input type="file" id="photoInput"><br>
-            <button id="saveBtn">Сохранить</button>
-            <button id="closeFormBtn">Отмена</button>
+    <div class="main-title">ВЗГЛЯД В БУДУЩЕЕ</div>
+    
+    <div class="tabs">
+        <div class="tab active" id="questionnaires-tab" onclick="switchTab('questionnaires')">Все анкеты</div>
+        <div class="tab" id="create-tab" onclick="switchTab('create')">Создать новую</div>
+    </div>
+    
+    <div id="questionnaires">
+        <h2>Доступные анкеты</h2>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Поиск по описанию...">
+            <button onclick="searchQuestionnaires()">Поиск</button>
+            <button onclick="clearSearch()">Очистить</button>
         </div>
-
-        <!-- Здесь будут загруженные анкеты -->
-        <h2>Список анкет</h2>
-        <div id="profiles-container" class="container"></div>
-    </main>
-
+        
+        <div class="service-filter-container" id="service-filters">
+            <!-- Фильтры услуг будут тут -->
+        </div>
+        
+        <div class="container" id="profiles-container">
+            <!-- Анкеты будут отображаться здесь -->
+        </div>
+    </div>
+    
+    <div id="create" style="display:none">
+        <h2>Создать новую анкету</h2>
+        <div class="form-container">
+            <input type="text" id="name" placeholder="Ваше имя" required>
+            <input type="text" id="age" placeholder="Ваш возраст" required>
+            <input type="text" id="location" placeholder="Ваше местоположение" required>
+            <textarea id="about" placeholder="О себе" rows="4" required></textarea>
+            
+            <div class="file-upload-container">
+                <button type="button" class="file-upload-btn" id="file-upload-btn">Выбрать изображение</button>
+                <input type="file" id="image-file" accept="image/*" style="display: none;">
+                <span id="file-name">Файл не выбран</span>
+            </div>
+            
+            <div class="preview-container">
+                <img id="image-preview" style="max-width: 100%; border-radius: 10px; display: none;">
+            </div>
+            
+            <h3>Услуги</h3>
+            <div class="services-container" id="services-container">
+                <div class="service-row">
+                    <input type="text" placeholder="Название услуги" class="service-name">
+                    <input type="number" placeholder="Цена, руб." class="service-price">
+                </div>
+            </div>
+            <button type="button" class="add-service-btn" onclick="addServiceRow()">+</button>
+            
+            <button type="button" onclick="submitQuestionnaire()">Отправить анкету</button>
+        </div>
+    </div>
+    
+    <!-- Детальный просмотр -->
+    <div class="detail-container" id="detail-container">
+        <div class="detail-view" id="detail-view">
+            <span class="close-btn" onclick="closeDetailView()">&times;</span>
+            <!-- Детальная информация будет тут -->
+        </div>
+    </div>
+    
     <script>
-        // Подключение к Appwrite
-        const client = new Appwrite.Client();
-        client.setEndpoint("https://cloud.appwrite.io/v1")
-              .setProject("67c5f7c100327cf444d4");
-
-        const database = new Appwrite.Databases(client);
-        const storage = new Appwrite.Storage(client);
-        const databaseId = "67c612a50017aa7ec1cd";
-        const collectionId = "67c612be003cad091ef8";
-
-        // Функция показа формы (вернул твою логику)
-        document.getElementById("openFormBtn").addEventListener("click", function() {
-            document.getElementById("form-container").style.display = "block";
-        });
-
-        // Функция скрытия формы
-        document.getElementById("closeFormBtn").addEventListener("click", function() {
-            document.getElementById("form-container").style.display = "none";
-        });
-
-        // Функция загрузки анкет из Appwrite
-        async function loadProfiles() {
-            try {
-                const response = await database.listDocuments(databaseId, collectionId);
-                const profilesContainer = document.getElementById("profiles-container");
-                profilesContainer.innerHTML = ""; // Очищаем контейнер перед загрузкой
-
-                if (response.documents.length === 0) {
-                    profilesContainer.innerHTML = "<p>Анкет пока нет.</p>";
-                    return;
+        // Appwrite Configuration
+        const appwrite = {
+            endpoint: 'https://cloud.appwrite.io/v1', // Replace with your Appwrite endpoint
+            projectId: 'your-project-id',            // Replace with your project ID
+            databaseId: 'your-database-id',          // Replace with your database ID
+            collectionId: 'your-collection-id',      // Replace with your collection ID
+            bucketId: 'your-bucket-id',              // Replace with your bucket ID for images
+            
+            client: null,
+            account: null,
+            databases: null,
+            storage: null,
+            userId: null,
+            
+            init: function() {
+                try {
+                    // Initialize Appwrite client
+                    this.client = new window.Appwrite.Client();
+                    this.client
+                        .setEndpoint(this.endpoint)
+                        .setProject(this.projectId);
+                    
+                    // Initialize services
+                    this.account = new window.Appwrite.Account(this.client);
+                    this.databases = new window.Appwrite.Databases(this.client);
+                    this.storage = new window.Appwrite.Storage(this.client);
+                    
+                    // Try to get current session
+                    this.account.get()
+                        .then(response => {
+                            this.userId = response.$id;
+                            console.log('User authenticated:', this.userId);
+                        })
+                        .catch(error => {
+                            console.log('User not authenticated, creating anonymous session');
+                            // Create anonymous session
+                            this.account.createAnonymousSession()
+                                .then(response => {
+                                    this.userId = response.userId;
+                                    console.log('Anonymous session created:', this.userId);
+                                })
+                                .catch(err => {
+                                    console.error('Failed to create anonymous session:', err);
+                                });
+                        });
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Appwrite initialization error:', error);
+                    return false;
                 }
-
-                response.documents.forEach(profile => {
-                    profilesContainer.innerHTML += `
-                        <div class="profile">
-                            <img src="${profile.image}" alt="Фото анкеты">
-                            <h3>${profile.name}</h3>
-                            <p>${profile.description}</p>
-                            <p><strong>Цена:</strong> ${profile.price} ₽/час</p>
-                            <a href="profile.html?id=${profile.$id}" class="button">Подробнее</a>
-                        </div>`;
-                });
-            } catch (error) {
-                console.error("Ошибка загрузки анкет:", error);
-                document.getElementById("profiles-container").innerHTML = "<p>Ошибка загрузки анкет.</p>";
+            },
+            
+            // List all questionnaires
+            listQuestionnaires: async function() {
+                try {
+                    const response = await this.databases.listDocuments(
+                        this.databaseId,
+                        this.collectionId
+                    );
+                    return response.documents;
+                } catch (error) {
+                    console.error('Failed to list questionnaires:', error);
+                    return [];
+                }
+            },
+            
+            // Create a new questionnaire
+            createQuestionnaire: async function(questionnaire) {
+                try {
+                    // First, upload the image if exists
+                    let imageId = null;
+                    if (questionnaire.image && questionnaire.image.startsWith('data:image')) {
+                        // Convert base64 to blob
+                        const response = await fetch(questionnaire.image);
+                        const blob = await response.blob();
+                        const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' });
+                        
+                        // Upload to Appwrite Storage
+                        const uploadResult = await this.storage.createFile(
+                            this.bucketId,
+                            'unique()',
+                            file
+                        );
+                        
+                        imageId = uploadResult.$id;
+                        // Update the image URL in the questionnaire
+                        questionnaire.imageId = imageId;
+                    }
+                    
+                    // Create document in database
+                    const result = await this.databases.createDocument(
+                        this.databaseId,
+                        this.collectionId,
+                        'unique()',
+                        questionnaire
+                    );
+                    
+                    return result;
+                } catch (error) {
+                    console.error('Failed to create questionnaire:', error);
+                    throw error;
+                }
+            },
+            
+            // Delete a questionnaire
+            deleteQuestionnaire: async function(questionnaireId) {
+                try {
+                    // Delete a questionnaire
+            deleteQuestionnaire: async function(questionnaireId) {
+                try {
+                    // Delete the document
+                    await this.databases.deleteDocument(
+                        this.databaseId,
+                        this.collectionId,
+                        questionnaireId
+                    );
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Failed to delete questionnaire:', error);
+                    return false;
+                }
+            },
+            
+            // Get image URL from storage
+            getImageUrl: function(imageId) {
+                if (!imageId) return null;
+                
+                return this.storage.getFileView(this.bucketId, imageId);
+            }
+        };
+        
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let questionnaires = [];
+        let currentUser = null;
+        let base64Image = null;
+        let activeServiceFilters = [];
+        let appwriteEnabled = false;
+        
+        // Enhanced storage with Appwrite support
+        const storage = {
+            save: async function(key, value) {
+                try {
+                    // Try to save to Appwrite if enabled
+                    if (appwriteEnabled) {
+                        return true; // Appwrite handles storage separately
+                    }
+                    
+                    // Try to save to Telegram WebApp
+                    if (tg && tg.CloudStorage) {
+                        tg.CloudStorage.setItem(key, value);
+                        return true;
+                    }
+                    
+                    // Use sessionStorage as fallback
+                    try {
+                        sessionStorage.setItem(key, value);
+                        return true;
+                    } catch (e) {
+                        console.warn("Failed to use sessionStorage", e);
+                        return false;
+                    }
+                } catch (e) {
+                    console.warn("Storage error", e);
+                    return false;
+                }
+            },
+            
+            load: async function(key) {
+                try {
+                    // If Appwrite is enabled, load from there
+                    if (appwriteEnabled) {
+                        // Questionnaires are loaded directly from Appwrite in loadQuestionnaires
+                        return null;
+                    }
+                    
+                    // Try to load from Telegram WebApp
+                    if (tg && tg.CloudStorage) {
+                        return tg.CloudStorage.getItem(key);
+                    }
+                    
+                    // Use sessionStorage as fallback
+                    try {
+                        return sessionStorage.getItem(key);
+                    } catch (e) {
+                        console.warn("Failed to use sessionStorage", e);
+                        return null;
+                    }
+                } catch (e) {
+                    console.warn("Storage error", e);
+                    return null;
+                }
+            }
+        };
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Try to initialize Appwrite
+            try {
+                appwriteEnabled = appwrite.init();
+            } catch (e) {
+                console.warn("Appwrite initialization failed, falling back to local storage", e);
+                appwriteEnabled = false;
+            }
+            
+            // Генерация ID пользователя или получение сохраненного
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                // Используем Telegram ID пользователя, если доступно
+                currentUser = 'tg_' + tg.initDataUnsafe.user.id;
+            } else if (appwriteEnabled && appwrite.userId) {
+                // Use Appwrite user ID if available
+                currentUser = appwrite.userId;
+            } else {
+                // Generate a random user ID
+                currentUser = 'user_' + Date.now().toString();
+            }
+            
+            // Загрузить сохраненные анкеты
+            await loadQuestionnaires();
+            
+            // Настройка загрузки файла
+            const fileBtn = document.getElementById('file-upload-btn');
+            const fileInput = document.getElementById('image-file');
+            const fileName = document.getElementById('file-name');
+            const previewImg = document.getElementById('image-preview');
+            
+            fileBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    fileName.textContent = file.name;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                        base64Image = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    fileName.textContent = 'Файл не выбран';
+                    previewImg.style.display = 'none';
+                    base64Image = null;
+                }
+            });
+            
+            // Настройка поиска
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchQuestionnaires();
+                }
+            });
+            
+            // Инициализация Telegram WebApp, если доступно
+            if (tg) {
+                tg.expand();
+                
+                // Установка темы Telegram
+                document.body.style.backgroundColor = tg.backgroundColor || '#f0f8ff';
+            }
+            
+            // Создание фильтров услуг
+            updateServiceFilters();
+        });
+        
+        // Загрузка анкет
+        async function loadQuestionnaires() {
+            try {
+                if (appwriteEnabled) {
+                    // Load questionnaires from Appwrite
+                    const documents = await appwrite.listQuestionnaires();
+                    questionnaires = documents.map(doc => {
+                        // Convert Appwrite document to our questionnaire format
+                        const q = {
+                            id: doc.$id,
+                            userId: doc.userId,
+                            name: doc.name,
+                            age: doc.age,
+                            location: doc.location,
+                            about: doc.about,
+                            services: doc.services || [],
+                            dateCreated: doc.dateCreated
+                        };
+                        
+                        // Handle image
+                        if (doc.imageId) {
+                            q.image = appwrite.getImageUrl(doc.imageId);
+                        } else if (doc.image) {
+                            q.image = doc.image;
+                        }
+                        
+                        return q;
+                    });
+                } else {
+                    // Load from local storage
+                    const savedQuestionnaires = await storage.load('questionnaires');
+                    if (savedQuestionnaires) {
+                        try {
+                            questionnaires = JSON.parse(savedQuestionnaires);
+                        } catch (e) {
+                            console.warn("Error parsing questionnaires", e);
+                            questionnaires = [];
+                        }
+                    }
+                }
+                
+                displayQuestionnaires();
+                updateServiceFilters();
+            } catch (e) {
+                console.warn("Error loading questionnaires", e);
+                questionnaires = [];
             }
         }
-
-        // Функция загрузки анкеты в Appwrite
-        document.getElementById("saveBtn").addEventListener("click", async function() {
-            let file = document.getElementById("photoInput").files[0];
-            let name = document.getElementById("nameInput").value.trim();
-            let desc = document.getElementById("descInput").value.trim();
-            let price = document.getElementById("priceInput").value.trim();
-
-            if (!file  !name  !desc || !price) {
-                alert("Заполните все поля!");
+        
+        // Сохранение анкет
+        async function saveQuestionnaires() {
+            try {
+                if (!appwriteEnabled) {
+                    // Only need to save to local storage if Appwrite is not enabled
+                    await storage.save('questionnaires', JSON.stringify(questionnaires));
+                }
+                // With Appwrite, each questionnaire is already saved individually
+            } catch (e) {
+                console.warn("Error saving questionnaires", e);
+                alert("Не удалось сохранить данные. Возможно, ваш браузер ограничивает доступ к хранилищу.");
+            }
+        }
+        
+        // Функция переключения вкладок
+        function switchTab(tabName) {
+            // Hide all tabs content
+            document.getElementById('questionnaires').style.display = 'none';
+            document.getElementById('create').style.display = 'none';
+            
+            // Show the selected tab content
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Update active tab styling
+            document.getElementById('questionnaires-tab').classList.remove('active');
+            document.getElementById('create-tab').classList.remove('active');
+            
+            if (tabName === 'questionnaires') {
+                document.getElementById('questionnaires-tab').classList.add('active');
+            } else if (tabName === 'create') {
+                document.getElementById('create-tab').classList.add('active');
+            }
+        }
+        
+        // Отображение анкет
+        function displayQuestionnaires(filteredQuestionnaires = null) {
+            const container = document.getElementById('profiles-container');
+            container.innerHTML = '';
+            
+            const questionnairesToDisplay = filteredQuestionnaires || questionnaires;
+            
+            if (questionnairesToDisplay.length === 0) {
+                container.innerHTML = '<p>Анкеты не найдены</p>';
                 return;
             }
-
-            try {
-                // Загружаем фото в Appwrite Storage
-                const uploadResponse = await storage.
-
-ᅠᅠ, [16.03.2025 17:55]
-createFile("default", "unique()", file);
-                const fileId = uploadResponse.$id;
-
-                // Получаем URL загруженного фото
-                const fileUrl = https://cloud.appwrite.io/v1/storage/buckets/default/files/${fileId}/view?project=67c5f7c100327cf444d4;
-
-                // Сохраняем анкету в Appwrite Database
-                await database.createDocument(databaseId, collectionId, "unique()", {
-                    name: name,
-                    description: desc,
-                    price: parseInt(price),
-                    image: fileUrl
-                });
-
-                alert("Анкета успешно добавлена!");
-                document.getElementById("form-container").style.display = "none"; // Закрываем форму
-                loadProfiles(); // Обновляем список анкет
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                alert("Ошибка при загрузке анкеты.");
+            
+            questionnairesToDisplay.forEach((questionnaire, index) => {
+                const profile = document.createElement('div');
+                profile.className = 'profile';
+                
+                const imgSrc = questionnaire.image || '/api/placeholder/250/180';
+                
+                profile.innerHTML = `
+                    <img src="${imgSrc}" alt="${questionnaire.name}">
+                    <h3>${questionnaire.name}, ${questionnaire.age}</h3>
+                    <p>${questionnaire.location}</p>
+                    <p>${questionnaire.about.substring(0, 100)}${questionnaire.about.length > 100 ? '...' : ''}</p>
+                    <button onclick="openDetailView(${index})">Подробнее</button>
+                `;
+                
+                container.appendChild(profile);
+            });
+        }
+        
+        // Добавление строки услуги
+        function addServiceRow() {
+            const container = document.getElementById('services-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'service-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Название услуги" class="service-name">
+                <input type="number" placeholder="Цена, руб." class="service-price">
+            `;
+            container.appendChild(newRow);
+        }
+        
+        // Отправка анкеты
+        async function submitQuestionnaire() {
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const location = document.getElementById('location').value;
+            const about = document.getElementById('about').value;
+            
+            // Validate required fields
+            if (!name || !age || !location || !about) {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
             }
-        });
-
-        // Загружаем анкеты при загрузке страницы
-        loadProfiles();
-    </script>
-</body>
-</html>
+            
+            // Get services
+            const services = [];
+            const serviceRows = document.querySelectorAll('.service-row');
+            serviceRows.forEach(row => {
+                const serviceName = row.querySelector('.service-name').value;
+                const servicePrice = row.querySelector('.service-price').value;
+                if (serviceName && servicePrice) {
+                    services.push({
+                        name: serviceName,
+                        price: servicePrice
+                    });
+                }
+            });
+            
+            // Create questionnaire object
+            const questionnaire = {
+                id: Date.now().toString(),
+                userId: currentUser,
+                name: name,
+                age: age,
+                location: location,
+                about: about,
+                image: base64Image,
+                services: services,
+                dateCreated: new Date().toISOString()
+            };
+            
+            try {
+                if (appwriteEnabled) {
+                    // Save to Appwrite
+                    await appwrite.createQuestionnaire(questionnaire);
+                    // Reload questionnaires to get the updated list
+                    await loadQuestionnaires();
+                } else {
+                    // Add to questionnaires array for local storage
+                    questionnaires.push(questionnaire);
+                    // Save questionnaires
+                    await saveQuestionnaires();
+                }
+                
+                // Reset form
+                document.getElementById('name').value = '';
+                document.getElementById('age').value = '';
+                document.getElementById('location').value = '';
+                document.getElementById('about').value = '';
+                document.getElementById('file-name').textContent = 'Файл не выбран';
+                document.getElementById('image-preview').style.display = 'none';
+                base64Image = null;
+                
+                // Clear services
+                const servicesContainer = document.getElementById('services-container');
+                servicesContainer.innerHTML = `
+                    <div class="service-row">
+                        <input type="text" placeholder="Название услуги" class="service-name">
+                        <input type="number" placeholder="Цена, руб." class="service-price">
+                    </div>
+                `;
+                
+                // Update service filters
+                updateServiceFilters();
+                
+                // Switch back to questionnaires tab
+                switchTab('questionnaires');
+                
+                // Display questionnaires
+                displayQuestionnaires();
+                
+                alert('Анкета успешно создана!');
+            } catch (error) {
+                console.error('Error submitting questionnaire:', error);
+                alert('Произошла ошибка при сохранении анкеты. Пожалуйста, попробуйте еще раз.');
+            }
+        }
+        
+        // Поиск анкет
+        function searchQuestionnaires() {
+            const searchText = document.getElementById('search-input').value.toLowerCase();
+            let filtered = questionnaires;
+            
+            // Filter by search text
+            if (searchText) {
+                filtered = filtered.filter(q => 
+                    q.name.toLowerCase().includes(searchText) || 
+                    q.about.toLowerCase().includes(searchText) ||
+                    q.location.toLowerCase().includes(searchText)
+                );
+            }
+            
+            // Filter by active service filters
+            if (activeServiceFilters.length > 0) {
+                filtered = filtered.filter(q => {
+                    return q.services.some(service => 
+                        activeServiceFilters.includes(service.name.toLowerCase())
+                    );
+                });
+            }
+            
+            displayQuestionnaires(filtered);
+        }
+        
+        // Очистка поиска
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            activeServiceFilters = [];
+            
+            // Reset service filter UI
+            const serviceTags = document.querySelectorAll('.service-tag');
+            serviceTags.forEach(tag => tag.classList.remove('active'));
+            
+            displayQuestionnaires();
+        }
+        
+        // Обновление фильтров услуг
+        function updateServiceFilters() {
+            // Get all unique services
+            const allServices = new Set();
+            questionnaires.forEach(q => {
+                if (q.services) {
+                    q.services.forEach(service => {
+                        if (service.name) {
+                            allServices.add(service.name.toLowerCase());
+                        }
+                    });
+                }
+            });
+            
+            // Create filter tags
+            const filterContainer = document.getElementById('service-filters');
+            filterContainer.innerHTML = '';
+            
+            if (allServices.size === 0) {
+                return;
+            }
+            
+            Array.from(allServices).sort().forEach(service => {
+                const tag = document.createElement('span');
+                tag.className = 'service-tag';
+                tag.textContent = service;
+                tag.addEventListener('click', () => {
+                    tag.classList.toggle('active');
+                    
+                    if (tag.classList.contains('active')) {
+                        // Add to active filters
+                        if (!activeServiceFilters.
