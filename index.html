@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ВЗГЛЯД В БУДУЩЕЕ</title>
-    <!-- Add favicon to suppress 404 error -->
     <link rel="icon" href="data:,">
-    <!-- Existing scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <!-- Appwrite script (updated to version 11.0.0) -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
     <style>
-        /* Your CSS remains unchanged */
         body { font-family: Arial, sans-serif; background-color: #f0f8ff; color: #333; text-align: center; margin: 0; padding: 0; }
         h1, h2 { color: #007acc; }
         .main-title { font-size: 42px; font-weight: bold; margin: 30px 0; color: #007acc; text-transform: uppercase; }
@@ -109,17 +105,18 @@
     </div>
 
     <script>
-        // Initialize Appwrite Client (already added as per instructions)
         const { Client } = Appwrite;
 
-        // Appwrite Configuration
+        const client = new Client();
+        client.setProject('67c5f7c100327cf444d4');
+
         const appwrite = {
             endpoint: 'https://cloud.appwrite.io/v1',
             projectId: '67c5f7c100327cf444d4',
             databaseId: '67c612a50017aa7ec1cd',
             collectionId: '67c612be003cad091ef8',
             bucketId: '67d6fb7f003412c9d5f6',
-            client: null,
+            client: client,
             account: null,
             databases: null,
             storage: null,
@@ -127,7 +124,6 @@
 
             init: function() {
                 try {
-                    this.client = new Client();
                     this.client
                         .setEndpoint(this.endpoint)
                         .setProject(this.projectId);
@@ -242,7 +238,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', async function() {
-            // Initialize Appwrite and wait for the result
             appwriteEnabled = await appwrite.init();
 
             if (!appwriteEnabled) {
