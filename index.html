@@ -8,7 +8,7 @@
     <link rel="icon" href="data:,">
     <!-- Existing scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <!-- Add Appwrite script here (version 17.0.1 as requested) -->
+    <!-- Appwrite script (version 17.0.1 as requested) -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.1"></script>
     <style>
         /* Your CSS remains unchanged */
@@ -109,7 +109,7 @@
     </div>
 
     <script>
-        // Initialize Appwrite Client (added here at the beginning of the script)
+        // Initialize Appwrite Client
         const { Client } = Appwrite;
 
         // Appwrite Configuration
@@ -127,8 +127,12 @@
 
             init: function() {
                 try {
+                    // Initialize the client and set the project (integrated here)
                     this.client = new Client();
-                    this.client.setEndpoint(this.endpoint).setProject(this.projectId);
+                    this.client
+                        .setEndpoint(this.endpoint)
+                        .setProject(this.projectId); // Set the project ID as requested
+
                     this.account = new Appwrite.Account(this.client);
                     this.databases = new Appwrite.Databases(this.client);
                     this.storage = new Appwrite.Storage(this.client);
