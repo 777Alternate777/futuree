@@ -8,8 +8,8 @@
     <link rel="icon" href="data:,">
     <!-- Existing scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <!-- Appwrite script (version 17.0.1 as requested) -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.1"></script>
+    <!-- Appwrite script (updated to version 11.0.0) -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
     <style>
         /* Your CSS remains unchanged */
         body { font-family: Arial, sans-serif; background-color: #f0f8ff; color: #333; text-align: center; margin: 0; padding: 0; }
@@ -109,7 +109,7 @@
     </div>
 
     <script>
-        // Initialize Appwrite Client
+        // Initialize Appwrite Client (already added as per instructions)
         const { Client } = Appwrite;
 
         // Appwrite Configuration
@@ -127,17 +127,15 @@
 
             init: function() {
                 try {
-                    // Initialize the client and set the project (integrated here)
                     this.client = new Client();
                     this.client
                         .setEndpoint(this.endpoint)
-                        .setProject(this.projectId); // Set the project ID as requested
+                        .setProject(this.projectId);
 
                     this.account = new Appwrite.Account(this.client);
                     this.databases = new Appwrite.Databases(this.client);
                     this.storage = new Appwrite.Storage(this.client);
 
-                    // Attempt to get the current user or create an anonymous session
                     return this.account.get()
                         .then(response => {
                             this.userId = response.$id;
