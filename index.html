@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ВЗГЛЯД В БУДУЩЕЕ</title>
+    <!-- Add favicon to suppress 404 error -->
+    <link rel="icon" href="data:,">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
     <style>
@@ -126,19 +128,29 @@
                     this.databases = new window.Appwrite.Databases(this.client);
                     this.storage = new window.Appwrite.Storage(this.client);
 
-                    this.account.get().then(response => {
-                        this.userId = response.$id;
-                        console.log('User authenticated:', this.userId);
-                    }).catch(() => {
-                        this.account.createAnonymousSession().then(response => {
-                            this.userId = response.userId;
-                            console.log('Anonymous session created:', this.userId);
-                        }).catch(err => console.error('Failed to create anonymous session:', err));
-                    });
-                    return true;
+                    // Attempt to get the current user or create an anonymous session
+                    return this.account.get()
+                        .then(response => {
+                            this.userId = response.$id;
+                            console.log('User authenticated:', this.userId);
+                            return true;
+                        })
+                        .catch(() => {
+                            console.log('No active session, creating anonymous session...');
+                            return this.account.createAnonymousSession()
+                                .then(response => {
+                                    this.userId = response.userId;
+                                    console.log('Anonymous session created:', this.userId);
+                                    return true;
+                                })
+                                .catch(err => {
+                                    console.error('Failed to create anonymous session:', err);
+                                    return false;
+                                });
+                        });
                 } catch (error) {
                     console.error('Appwrite initialization error:', error);
-                    return false;
+                    return Promise.resolve(false);
                 }
             },
 
@@ -148,6 +160,7 @@
                     return response.documents;
                 } catch (error) {
                     console.error('Failed to list questionnaires:', error);
+                    alert('Не удалось загрузить анкеты. Проверьте настройки CORS в Appwrite.');
                     return [];
                 }
             },
@@ -222,7 +235,12 @@
         };
 
         document.addEventListener('DOMContentLoaded', async function() {
-            appwriteEnabled = appwrite.init();
+            // Initialize Appwrite and wait for the result
+            appwriteEnabled = await appwrite.init();
+
+            if (!appwriteEnabled) {
+                alert('Не удалось инициализировать Appwrite. Проверьте настройки CORS в Appwrite Console (добавьте https://777alternate777.github.io в список разрешенных доменов).');
+            }
 
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 currentUser = 'tg_' + tg.initDataUnsafe.user.id;
@@ -419,7 +437,7 @@
                 alert('Анкета успешно создана!');
             } catch (error) {
                 console.error('Error submitting questionnaire:', error);
-                alert('Произошла ошибка при сохранении анкеты.');
+                alert('Произошла ошибка при сохранении анкеты. Проверьте настройки CORS в Appwrite.');
             }
         }
 
