@@ -6,8 +6,10 @@
     <title>ВЗГЛЯД В БУДУЩЕЕ</title>
     <!-- Add favicon to suppress 404 error -->
     <link rel="icon" href="data:,">
+    <!-- Existing scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.9.0/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
+    <!-- Add Appwrite script here (version 17.0.1 as requested) -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.1"></script>
     <style>
         /* Your CSS remains unchanged */
         body { font-family: Arial, sans-serif; background-color: #f0f8ff; color: #333; text-align: center; margin: 0; padding: 0; }
@@ -107,6 +109,9 @@
     </div>
 
     <script>
+        // Initialize Appwrite Client (added here at the beginning of the script)
+        const { Client } = Appwrite;
+
         // Appwrite Configuration
         const appwrite = {
             endpoint: 'https://cloud.appwrite.io/v1',
@@ -122,11 +127,11 @@
 
             init: function() {
                 try {
-                    this.client = new window.Appwrite.Client();
+                    this.client = new Client();
                     this.client.setEndpoint(this.endpoint).setProject(this.projectId);
-                    this.account = new window.Appwrite.Account(this.client);
-                    this.databases = new window.Appwrite.Databases(this.client);
-                    this.storage = new window.Appwrite.Storage(this.client);
+                    this.account = new Appwrite.Account(this.client);
+                    this.databases = new Appwrite.Databases(this.client);
+                    this.storage = new Appwrite.Storage(this.client);
 
                     // Attempt to get the current user or create an anonymous session
                     return this.account.get()
