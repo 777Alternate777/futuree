@@ -127,20 +127,21 @@
                     this.databases = new window.Appwrite.Databases(this.client);
                     this.storage = new window.Appwrite.Storage(this.client);
 
-                    console.log('Initializing Appwrite...');
+                    console.log('Initializing Appwrite with endpoint:', this.endpoint, 'and project:', this.projectId);
                     try {
                         const response = await this.account.get();
                         this.userId = response.$id;
                         console.log('Session found, userId:', this.userId);
-                    } catch {
+                    } catch (error) {
                         console.log('No session, creating anonymous...');
                         const session = await this.account.createAnonymousSession();
                         this.userId = session.userId;
                         console.log('Anonymous session created, userId:', this.userId);
                     }
+                    console.log('Appwrite initialization successful');
                     return true;
                 } catch (error) {
-                    console.error('Appwrite init failed:', error);
+                    console.error('Appwrite init failed:', error.code, error.message, error.response);
                     return false;
                 }
             },
@@ -150,9 +151,12 @@
                     console.log('Fetching questionnaires...');
                     const response = await this.databases.listDocuments(this.databaseId, this.collectionId);
                     console.log('Questionnaires fetched:', response.documents);
-                    return response.documents;
+                    return response.documents.map(doc => ({
+                        ...doc,
+                        services: doc.services ? JSON.parse(doc.services) : []
+                    }));
                 } catch (error) {
-                    console.error('Failed to list questionnaires:', error);
+                    console.error('Failed to list questionnaires:', error.code, error.message, error.response);
                     return [];
                 }
             },
@@ -167,8 +171,16 @@
                         const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' });
                         const uploadResult = await this.storage.createFile(this.bucketId, 'unique()', file);
                         imageId = uploadResult.$id;
+                        delete questionnaire.image; // Удаляем base64
                         questionnaire.imageId = imageId;
                         console.log('Image uploaded, ID:', imageId);
+                    }
+
+                    // Преобразуем services в строку
+                    if (questionnaire.services && questionnaire.services.length > 0) {
+                        questionnaire.services = JSON.stringify(questionnaire.services);
+                    } else {
+                        questionnaire.services = '[]'; // Пустой массив как строка
                     }
 
                     console.log('Sending POST to Appwrite with:', questionnaire);
@@ -190,9 +202,10 @@
             deleteQuestionnaire: async function(questionnaireId) {
                 try {
                     await this.databases.deleteDocument(this.databaseId, this.collectionId, questionnaireId);
+                    console.log('Questionnaire deleted:', questionnaireId);
                     return true;
                 } catch (error) {
-                    console.error('Failed to delete questionnaire:', error);
+                    console.error('Failed to delete questionnaire:', error.code, error.message, error.response);
                     return false;
                 }
             },
@@ -243,8 +256,10 @@
             appwriteEnabled = await appwrite.init();
             console.log('Appwrite initialized, appwriteEnabled:', appwriteEnabled);
             if (!appwriteEnabled) {
-                console.log('Appwrite failed, using local storage');
+                console.log('Appwrite failed, falling back to local storage');
                 alert('Appwrite не работает. Используется локальное хранилище.');
+            } else {
+                console.log('Appwrite is enabled, proceeding with cloud storage');
             }
 
             if (tg?.initDataUnsafe?.user) {
@@ -254,6 +269,7 @@
             } else {
                 currentUser = 'user_' + Date.now().toString();
             }
+            console.log('Current user:', currentUser);
 
             await loadQuestionnaires();
 
@@ -306,14 +322,13 @@
                     const documents = await appwrite.listQuestionnaires();
                     questionnaires = documents.map(doc => ({
                         id: doc.$id,
-                        userId: doc.userId,
                         name: doc.name,
                         age: doc.age,
                         location: doc.location,
                         about: doc.about,
-                        services: doc.services || [],
+                        services: doc.services ? JSON.parse(doc.services) : [],
                         dateCreated: doc.dateCreated,
-                        image: doc.imageId ? appwrite.getImageUrl(doc.imageId) : doc.image
+                        image: doc.imageId ? appwrite.getImageUrl(doc.imageId) : null
                     }));
                 } else {
                     const saved = await storage.load('questionnaires');
@@ -359,7 +374,7 @@
             toDisplay.forEach((q, index) => {
                 const profile = document.createElement('div');
                 profile.className = 'profile';
-                const imgSrc = q.image || '/api/placeholder/250/180';
+                const imgSrc = q.image || 'https://via.placeholder.com/250x180';
                 profile.innerHTML = `
                     <img src="${imgSrc}" alt="${q.name}">
                     <h3>${q.name}, ${q.age}</h3>
@@ -409,7 +424,7 @@
                 location,
                 about,
                 image: base64Image,
-                services,
+                services, // Оставляем как массив, преобразуем в createQuestionnaire
                 dateCreated: new Date().toISOString()
             };
 
@@ -447,7 +462,7 @@
                 displayQuestionnaires();
                 alert('Анкета успешно создана!');
             } catch (error) {
-                console.error('Submit error:', error);
+                console.error('Submit error:', error.code, error.message, error.response);
                 alert('Произошла ошибка при сохранении анкеты: ' + error.message);
             }
         }
@@ -512,7 +527,7 @@
             const q = questionnaires[index];
             const detailContainer = document.getElementById('detail-container');
             const detailView = document.getElementById('detail-view');
-            const imgSrc = q.image || '/api/placeholder/300/200';
+            const imgSrc = q.image || 'https://via.placeholder.com/300x200';
 
             let servicesHTML = '';
             if (q.services && q.services.length > 0) {
