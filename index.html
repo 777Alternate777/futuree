@@ -404,7 +404,6 @@
             });
 
             const questionnaire = {
-                id: Date.now().toString(),
                 userId: currentUser,
                 name,
                 age,
@@ -425,7 +424,7 @@
                     await loadQuestionnaires();
                 } else {
                     console.log('Saving locally...');
-                    questionnaires.push(questionnaire);
+                    questionnaires.push({ ...questionnaire, id: Date.now().toString() });
                     await saveQuestionnaires();
                 }
 
