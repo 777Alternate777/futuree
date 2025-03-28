@@ -105,65 +105,54 @@
     </div>
 
     <script>
-        const { Client } = Appwrite;
-
-        const client = new Client();
-        client.setProject('67c5f7c100327cf444d4');
-
         const appwrite = {
             endpoint: 'https://cloud.appwrite.io/v1',
             projectId: '67c5f7c100327cf444d4',
             databaseId: '67c612a50017aa7ec1cd',
             collectionId: '67c612be003cad091ef8',
             bucketId: '67d6fb7f003412c9d5f6',
-            client: client,
+            client: new window.Appwrite.Client(),
             account: null,
             databases: null,
             storage: null,
             userId: null,
 
-            init: function() {
+            init: async function() {
                 try {
                     this.client
                         .setEndpoint(this.endpoint)
                         .setProject(this.projectId);
 
-                    this.account = new Appwrite.Account(this.client);
-                    this.databases = new Appwrite.Databases(this.client);
-                    this.storage = new Appwrite.Storage(this.client);
+                    this.account = new window.Appwrite.Account(this.client);
+                    this.databases = new window.Appwrite.Databases(this.client);
+                    this.storage = new window.Appwrite.Storage(this.client);
 
-                    return this.account.get()
-                        .then(response => {
-                            this.userId = response.$id;
-                            console.log('User authenticated:', this.userId);
-                            return true;
-                        })
-                        .catch(() => {
-                            console.log('No active session, creating anonymous session...');
-                            return this.account.createAnonymousSession()
-                                .then(response => {
-                                    this.userId = response.userId;
-                                    console.log('Anonymous session created:', this.userId);
-                                    return true;
-                                })
-                                .catch(err => {
-                                    console.error('Failed to create anonymous session:', err);
-                                    return false;
-                                });
-                        });
+                    console.log('Initializing Appwrite...');
+                    try {
+                        const response = await this.account.get();
+                        this.userId = response.$id;
+                        console.log('Session found, userId:', this.userId);
+                    } catch {
+                        console.log('No session, creating anonymous...');
+                        const session = await this.account.createAnonymousSession();
+                        this.userId = session.userId;
+                        console.log('Anonymous session created, userId:', this.userId);
+                    }
+                    return true;
                 } catch (error) {
-                    console.error('Appwrite initialization error:', error);
-                    return Promise.resolve(false);
+                    console.error('Appwrite init failed:', error);
+                    return false;
                 }
             },
 
             listQuestionnaires: async function() {
                 try {
+                    console.log('Fetching questionnaires...');
                     const response = await this.databases.listDocuments(this.databaseId, this.collectionId);
+                    console.log('Questionnaires fetched:', response.documents);
                     return response.documents;
                 } catch (error) {
                     console.error('Failed to list questionnaires:', error);
-                    alert('Не удалось загрузить анкеты. Проверьте настройки CORS в Appwrite.');
                     return [];
                 }
             },
@@ -172,17 +161,27 @@
                 try {
                     let imageId = null;
                     if (questionnaire.image && questionnaire.image.startsWith('data:image')) {
+                        console.log('Uploading image...');
                         const response = await fetch(questionnaire.image);
                         const blob = await response.blob();
                         const file = new File([blob], `${Date.now()}.jpg`, { type: 'image/jpeg' });
                         const uploadResult = await this.storage.createFile(this.bucketId, 'unique()', file);
                         imageId = uploadResult.$id;
                         questionnaire.imageId = imageId;
+                        console.log('Image uploaded, ID:', imageId);
                     }
-                    const result = await this.databases.createDocument(this.databaseId, this.collectionId, 'unique()', questionnaire);
+
+                    console.log('Sending POST to Appwrite with:', questionnaire);
+                    const result = await this.databases.createDocument(
+                        this.databaseId,
+                        this.collectionId,
+                        'unique()',
+                        questionnaire
+                    );
+                    console.log('Document created:', result);
                     return result;
                 } catch (error) {
-                    console.error('Failed to create questionnaire:', error);
+                    console.error('Create questionnaire failed:', error);
                     throw error;
                 }
             },
@@ -203,7 +202,7 @@
             }
         };
 
-        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let tg = window.Telegram?.WebApp || null;
         let questionnaires = [];
         let currentUser = null;
         let base64Image = null;
@@ -214,24 +213,26 @@
             save: async function(key, value) {
                 try {
                     if (appwriteEnabled) return true;
-                    if (tg && tg.CloudStorage) {
-                        tg.CloudStorage.setItem(key, value);
+                    if (tg?.CloudStorage) {
+                        await new Promise((resolve) => tg.CloudStorage.setItem(key, value, resolve));
                         return true;
                     }
                     sessionStorage.setItem(key, value);
                     return true;
                 } catch (e) {
-                    console.warn("Storage error", e);
+                    console.warn("Storage save error:", e);
                     return false;
                 }
             },
             load: async function(key) {
                 try {
                     if (appwriteEnabled) return null;
-                    if (tg && tg.CloudStorage) return tg.CloudStorage.getItem(key);
+                    if (tg?.CloudStorage) {
+                        return await new Promise((resolve) => tg.CloudStorage.getItem(key, resolve));
+                    }
                     return sessionStorage.getItem(key);
                 } catch (e) {
-                    console.warn("Storage error", e);
+                    console.warn("Storage load error:", e);
                     return null;
                 }
             }
@@ -239,12 +240,13 @@
 
         document.addEventListener('DOMContentLoaded', async function() {
             appwriteEnabled = await appwrite.init();
-
+            console.log('Appwrite initialized, appwriteEnabled:', appwriteEnabled);
             if (!appwriteEnabled) {
-                alert('Не удалось инициализировать Appwrite. Проверьте настройки CORS в Appwrite Console (добавьте https://777alternate777.github.io в список разрешенных доменов).');
+                console.log('Appwrite failed, using local storage');
+                alert('Appwrite не работает. Используется локальное хранилище.');
             }
 
-            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            if (tg?.initDataUnsafe?.user) {
                 currentUser = 'tg_' + tg.initDataUnsafe.user.id;
             } else if (appwriteEnabled && appwrite.userId) {
                 currentUser = appwrite.userId;
@@ -319,7 +321,7 @@
                 displayQuestionnaires();
                 updateServiceFilters();
             } catch (e) {
-                console.warn("Error loading questionnaires", e);
+                console.warn("Error loading questionnaires:", e);
                 questionnaires = [];
             }
         }
@@ -328,7 +330,7 @@
             try {
                 if (!appwriteEnabled) await storage.save('questionnaires', JSON.stringify(questionnaires));
             } catch (e) {
-                console.warn("Error saving questionnaires", e);
+                console.warn("Error saving questionnaires:", e);
                 alert("Не удалось сохранить данные.");
             }
         }
@@ -380,12 +382,15 @@
         }
 
         async function submitQuestionnaire() {
+            console.log('Submit started, appwriteEnabled:', appwriteEnabled);
+
             const name = document.getElementById('name').value;
             const age = document.getElementById('age').value;
             const location = document.getElementById('location').value;
             const about = document.getElementById('about').value;
 
             if (!name || !age || !location || !about) {
+                console.log('Validation failed: missing fields');
                 alert('Пожалуйста, заполните все обязательные поля');
                 return;
             }
@@ -409,11 +414,16 @@
                 dateCreated: new Date().toISOString()
             };
 
+            console.log('Questionnaire prepared:', questionnaire);
+
             try {
                 if (appwriteEnabled) {
-                    await appwrite.createQuestionnaire(questionnaire);
+                    console.log('Sending to Appwrite...');
+                    const result = await appwrite.createQuestionnaire(questionnaire);
+                    console.log('Appwrite response:', result);
                     await loadQuestionnaires();
                 } else {
+                    console.log('Saving locally...');
                     questionnaires.push(questionnaire);
                     await saveQuestionnaires();
                 }
@@ -438,8 +448,8 @@
                 displayQuestionnaires();
                 alert('Анкета успешно создана!');
             } catch (error) {
-                console.error('Error submitting questionnaire:', error);
-                alert('Произошла ошибка при сохранении анкеты. Проверьте настройки CORS в Appwrite.');
+                console.error('Submit error:', error);
+                alert('Произошла ошибка при сохранении анкеты: ' + error.message);
             }
         }
 
