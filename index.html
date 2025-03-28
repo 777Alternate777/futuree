@@ -172,6 +172,7 @@
                     }
 
                     console.log('Sending POST to Appwrite with:', questionnaire);
+                    console.log('Database ID:', this.databaseId, 'Collection ID:', this.collectionId);
                     const result = await this.databases.createDocument(
                         this.databaseId,
                         this.collectionId,
@@ -181,7 +182,7 @@
                     console.log('Document created:', result);
                     return result;
                 } catch (error) {
-                    console.error('Create questionnaire failed:', error);
+                    console.error('Create questionnaire failed with details:', error);
                     throw error;
                 }
             },
