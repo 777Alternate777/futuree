@@ -182,7 +182,7 @@
                     console.log('Document created:', result);
                     return result;
                 } catch (error) {
-                    console.error('Create questionnaire failed with details:', error);
+                    console.error('Create questionnaire failed with details:', error.code, error.message, error.response);
                     throw error;
                 }
             },
@@ -404,7 +404,6 @@
             });
 
             const questionnaire = {
-                userId: currentUser,
                 name,
                 age,
                 location,
