@@ -1,51 +1,114 @@
-body {
-  font-family: sans-serif;
-  margin: 0;
-  background: #f7f5ff;
-  color: #333;
+* {
+  box-sizing: border-box;
 }
-header, footer {
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f9f7ff;
+  color: #333;
+  line-height: 1.6;
+}
+
+a {
+  color: #6b3ec9;
+  text-decoration: none;
+}
+
+header {
   background: #fff;
   padding: 20px;
   border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+  align-items: center;
 }
-nav a {
-  margin: 0 10px;
-  text-decoration: none;
+
+.logo {
+  font-weight: bold;
+  font-size: 24px;
   color: #6b3ec9;
 }
-.hero {
-  text-align: center;
-  padding: 50px 20px;
-  background: #ece9ff;
+
+nav a {
+  margin: 0 10px;
+  font-weight: 600;
 }
-.hero .button {
+
+.hero {
+  background: linear-gradient(to right, #ece9ff, #f7f5ff);
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.button {
   background: #6b3ec9;
   color: #fff;
-  padding: 10px 20px;
-  text-decoration: none;
-  border-radius: 6px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  display: inline-block;
+  transition: background 0.3s;
 }
-.features, main {
-  padding: 20px;
+
+.button:hover {
+  background: #5931b5;
 }
-.experts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+
+section {
+  padding: 40px 20px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
-.expert-card {
-  background: #fff;
-  padding: 10px;
+
+.features ul,
+.how-it-works ol {
+  padding-left: 20px;
+}
+
+.features li,
+.how-it-works li {
+  margin-bottom: 12px;
+}
+
+.safety {
+  background: #ece9ff;
   border-radius: 10px;
-  width: 220px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 30px;
+}
+
+footer {
   text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  background: #f3f1fc;
+  border-top: 1px solid #ddd;
+  margin-top: 40px;
 }
-.expert-card img {
-  width: 100%;
-  border-radius: 10px;
+
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  nav {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  nav a {
+    display: block;
+    margin: 5px 0;
+  }
 }
