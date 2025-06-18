@@ -1,0 +1,51 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: #f7f5ff;
+  color: #333;
+}
+header, footer {
+  background: #fff;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+nav a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #6b3ec9;
+}
+.hero {
+  text-align: center;
+  padding: 50px 20px;
+  background: #ece9ff;
+}
+.hero .button {
+  background: #6b3ec9;
+  color: #fff;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.features, main {
+  padding: 20px;
+}
+.experts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.expert-card {
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  width: 220px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.expert-card img {
+  width: 100%;
+  border-radius: 10px;
+}
